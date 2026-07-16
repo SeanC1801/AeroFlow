@@ -1,0 +1,319 @@
+<!-- File: index.html  (STANDALONE — double-click to open, no server needed) -->
+<!-- This is a self-contained build of the AeroFlow board. CSS + JS are inlined and
+     the API is replaced by an in-memory JS store so it runs straight from file://.
+     For real development use the modular project (main.py + /static + /templates). -->
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>AeroFlow - Kanban Board (Standalone)</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&amp;family=Work+Sans:wght@600&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: { extend: {
+      colors: {
+        "primary-container": "#0099ff", "on-background": "#191c1e", "secondary-container": "#6bfe9c",
+        "tertiary-container": "#cea700", "primary": "#0061a5", "secondary": "#006d37",
+        "error": "#ba1a1a", "surface-tint": "#0061a5", "on-surface": "#191c1e",
+        "on-surface-variant": "#3f4753", "background": "#f7f9fb", "surface": "#f7f9fb",
+        "on-primary": "#ffffff"
+      },
+      borderRadius: { "DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px" },
+      spacing: { "unit": "8px", "gutter-md": "24px" },
+      fontFamily: { "label-sm": ["Work Sans"], "headline-xl": ["Plus Jakarta Sans"],
+                    "headline-lg": ["Plus Jakarta Sans"], "body-md": ["Plus Jakarta Sans"] },
+      fontSize: {
+        "label-sm": ["12px", { "lineHeight": "1.2", "letterSpacing": "0.05em", "fontWeight": "600" }],
+        "headline-xl": ["48px", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+        "headline-lg": ["32px", { "lineHeight": "1.2", "fontWeight": "700" }],
+        "body-md": ["16px", { "lineHeight": "1.6", "fontWeight": "400" }]
+      }
+    } }
+  }
+</script>
+<style>
+/* ==== Inlined from static/css/styles.css ==== */
+body {
+    background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDhcZSCl01TEvehdOYq5ME-XWb3QSOJQiSvTQugufzxYIBQWlWJswQOja1a7Ycoc_z37zNy4TXt39Wr3eYWY13bqmTPT68PAlAiiAvzg8Bfe6f5bO4xrCWb3iGIhj-qHqx1BscvufuZN1Xh5rj-i4ZlHqpl8nVgpn5uuSG6F_Ln3bk1-7uBpVm5XTLNfBmQheMv1ooc7gFehpy5zEAHPu2Zi6U915_Ncl7XmOd36hwUmN8wEQwHvKFKc5_fdyyBTXPjTIxU7YjQofmW');
+    background-size: cover; background-position: center; background-attachment: fixed;
+}
+.glass-panel {
+    background: rgba(255,255,255,0.2); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255,255,255,0.4); box-shadow: 0 8px 32px 0 rgba(0,0,0,0.1);
+}
+.glass-tray {
+    background: rgba(255,255,255,0.1); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255,255,255,0.3); border-top: 1px solid rgba(255,255,255,0.6);
+    border-left: 1px solid rgba(255,255,255,0.5);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1), inset 0 2px 10px rgba(255,255,255,0.2);
+}
+/* 3D flip — explicit height + blur isolated from the backface layer */
+.card-container { perspective: 1000px; height: 180px; cursor: pointer; }
+.card-inner { position: relative; width: 100%; height: 100%;
+    transition: transform 0.6s cubic-bezier(0.4,0,0.2,1); transform-style: preserve-3d; }
+.card-container.is-flipped .card-inner { transform: rotateY(180deg); }
+.card-face { position: absolute; inset: 0; -webkit-backface-visibility: hidden;
+    backface-visibility: hidden; border-radius: 0.75rem; }
+.card-face--back { transform: rotateY(180deg); }
+.card-face__surface {
+    position: absolute; inset: 0; border-radius: inherit; overflow: hidden;
+    display: flex; flex-direction: column; justify-content: space-between;
+    background: linear-gradient(135deg, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.5) 100%);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.9);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.05), inset 0 1px 2px rgba(255,255,255,0.9);
+}
+.card-face__surface::before { content: ''; position: absolute; top:0; left:0; right:0; height:50%;
+    background: linear-gradient(to bottom, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0) 100%); pointer-events: none; }
+.card-container:hover .card-inner { transform: perspective(1000px) rotateX(4deg) rotateY(-4deg) scale(1.03); }
+.card-container.is-flipped:hover .card-inner { transform: rotateY(180deg) scale(1.03); }
+.card-container:hover .card-face__surface {
+    box-shadow: 0 15px 30px rgba(0,0,0,0.12), inset 0 2px 5px rgba(255,255,255,1), 0 0 22px rgba(255,255,255,0.55); }
+.sticky-lime  .card-face__surface { background: linear-gradient(135deg, rgba(200,255,140,0.9), rgba(182,255,107,0.6)); }
+.sticky-sunny .card-face__surface { background: linear-gradient(135deg, rgba(255,245,160,0.9), rgba(255,235,107,0.6)); }
+.sticky-aqua  .card-face__surface { background: linear-gradient(135deg, rgba(170,250,255,0.9), rgba(107,245,255,0.6)); }
+.sticky-pink  .card-face__surface { background: linear-gradient(135deg, rgba(255,200,240,0.9), rgba(255,161,232,0.6)); }
+.avatar-badge { position: absolute; top: 0.5rem; right: 0.5rem; width: 1.75rem; height: 1.75rem;
+    border-radius: 9999px; background: rgba(255,255,255,0.6); color: #0061a5;
+    display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 10px;
+    border: 1px solid rgba(255,255,255,0.8); backdrop-filter: blur(4px); }
+.card-toolbar { display: flex; justify-content: space-around; padding: 0.5rem;
+    background: rgba(255,255,255,0.3); border-top: 1px solid rgba(255,255,255,0.5); backdrop-filter: blur(4px); }
+.card-toolbar .material-symbols-outlined { font-size: 18px; color: #0061a5; cursor: pointer; transition: transform 0.15s ease; }
+.card-toolbar .material-symbols-outlined:hover { transform: scale(1.15); }
+.edit-field { width: 100%; background: rgba(255,255,255,0.55); border: 1px solid rgba(255,255,255,0.7);
+    border-radius: 0.5rem; padding: 0.35rem 0.5rem; font-size: 12px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.08); }
+.edit-field:focus { outline: none; box-shadow: 0 0 0 2px rgba(0,97,165,0.4); }
+.color-dot { width: 1.1rem; height: 1.1rem; border-radius: 9999px; cursor: pointer;
+    border: 2px solid rgba(255,255,255,0.9); box-shadow: 0 1px 4px rgba(0,0,0,0.15); }
+.color-dot.selected { outline: 2px solid #0061a5; outline-offset: 1px; }
+.jelly-button { background: linear-gradient(180deg, #0099ff, #0061a5);
+    box-shadow: 0 4px 15px rgba(0,153,255,0.4), inset 0 2px 6px rgba(255,255,255,0.6);
+    position: relative; overflow: hidden; border: 1px solid rgba(255,255,255,0.5); color: white; }
+.jelly-button::before { content: ''; position: absolute; top:0; left:10%; right:10%; height:40%;
+    background: rgba(255,255,255,0.4); border-radius: 50%; filter: blur(1px); }
+.btn-save { background: linear-gradient(180deg, #6bfe9c, #006d37); color: white; border-radius: 9999px;
+    padding: 0.3rem 0.9rem; font-size: 11px; font-weight: 700;
+    box-shadow: 0 3px 10px rgba(0,109,55,0.35), inset 0 1px 3px rgba(255,255,255,0.6); }
+.search-input { background: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.6); box-shadow: inset 0 2px 5px rgba(0,0,0,0.05); }
+.board-scroll::-webkit-scrollbar { width: 4px; }
+.board-scroll::-webkit-scrollbar-track { background: transparent; }
+.board-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.4); border-radius: 4px; }
+</style>
+</head>
+
+<body class="font-body-md text-on-surface antialiased h-screen overflow-hidden flex flex-col bg-transparent">
+
+<nav class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-gutter-md h-16 bg-white/20 backdrop-blur-xl border-b border-white/40 shadow-[0_4px_24px_0_rgba(0,0,0,0.05)]">
+  <div class="flex items-center gap-8">
+    <span class="font-headline-lg text-headline-lg font-bold tracking-tight text-primary drop-shadow-md">AeroFlow</span>
+    <div class="hidden md:flex gap-6">
+      <a class="text-primary font-bold border-b-2 border-primary pb-1 font-label-sm text-label-sm px-2" href="#">Board</a>
+      <a class="text-on-surface-variant font-medium hover:text-primary transition-colors font-label-sm text-label-sm px-2 py-1" href="#">Members</a>
+      <a class="text-on-surface-variant font-medium hover:text-primary transition-colors font-label-sm text-label-sm px-2 py-1" href="#">Calendar</a>
+    </div>
+  </div>
+  <div class="flex items-center gap-4">
+    <div class="relative hidden sm:block">
+      <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-surface-tint">search</span>
+      <input class="search-input pl-10 pr-4 py-1.5 rounded-full text-body-md focus:outline-none focus:ring-2 focus:ring-primary/50 w-64 backdrop-blur-md" placeholder="Search..." type="text">
+    </div>
+    <button id="add-task-btn" class="jelly-button px-6 py-2 rounded-full font-label-sm text-label-sm font-bold flex items-center gap-2 hover:scale-105 transition-transform">
+      <span class="material-symbols-outlined text-[18px]">add</span> Add New Task
+    </button>
+  </div>
+</nav>
+
+<div class="flex flex-1 pt-16 h-full relative z-10">
+  <main class="flex-1 p-gutter-md h-full overflow-hidden flex flex-col">
+    <header class="mb-6 flex justify-between items-end shrink-0 bg-white/10 p-4 rounded-2xl backdrop-blur-md border border-white/30 shadow-sm">
+      <div>
+        <h1 class="font-headline-xl text-headline-xl text-on-surface drop-shadow-md">Sprint Board</h1>
+        <p class="font-body-md text-body-md text-on-surface mt-1 drop-shadow-sm font-medium">
+          Project <span class="font-bold text-primary">DEMO-123</span> &middot; Standalone demo (no server).
+        </p>
+      </div>
+    </header>
+
+    <div class="flex-1 overflow-hidden w-full">
+      <div class="grid grid-cols-4 gap-6 h-full px-2 py-2">
+        <div class="glass-tray rounded-3xl p-4 flex flex-col gap-4 h-full min-h-0">
+          <div class="glass-panel rounded-full px-4 py-2 flex justify-between items-center">
+            <span class="font-label-sm text-label-sm font-bold text-on-surface flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-tertiary-container shadow-[0_0_8px_rgba(206,167,0,0.8)]"></span> To-Do
+            </span>
+            <span class="bg-white/60 px-2 py-0.5 rounded-full font-label-sm text-[10px] shadow-sm" data-count="todo">0</span>
+          </div>
+          <div class="flex-1 overflow-y-auto board-scroll pr-1 flex flex-col gap-4" data-status="todo"></div>
+        </div>
+        <div class="glass-tray rounded-3xl p-4 flex flex-col gap-4 h-full min-h-0">
+          <div class="glass-panel rounded-full px-4 py-2 flex justify-between items-center">
+            <span class="font-label-sm text-label-sm font-bold text-on-surface flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-primary shadow-[0_0_8px_rgba(0,153,255,0.8)] animate-pulse"></span> In Progress
+            </span>
+            <span class="bg-white/60 px-2 py-0.5 rounded-full font-label-sm text-[10px] shadow-sm" data-count="in_progress">0</span>
+          </div>
+          <div class="flex-1 overflow-y-auto board-scroll pr-1 flex flex-col gap-4" data-status="in_progress"></div>
+        </div>
+        <div class="glass-tray rounded-3xl p-4 flex flex-col gap-4 h-full min-h-0">
+          <div class="glass-panel rounded-full px-4 py-2 flex justify-between items-center">
+            <span class="font-label-sm text-label-sm font-bold text-on-surface flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-secondary shadow-[0_0_8px_rgba(0,109,55,0.8)]"></span> Done
+            </span>
+            <span class="bg-white/60 px-2 py-0.5 rounded-full font-label-sm text-[10px] shadow-sm" data-count="done">0</span>
+          </div>
+          <div class="flex-1 overflow-y-auto board-scroll pr-1 flex flex-col gap-4" data-status="done"></div>
+        </div>
+        <div class="glass-tray rounded-3xl p-4 flex flex-col gap-4 h-full min-h-0">
+          <div class="glass-panel rounded-full px-4 py-2 flex justify-between items-center">
+            <span class="font-label-sm text-label-sm font-bold text-on-surface flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-primary-container shadow-[0_0_8px_rgba(0,153,255,0.8)]"></span> Approved
+            </span>
+            <span class="bg-white/60 px-2 py-0.5 rounded-full font-label-sm text-[10px] shadow-sm" data-count="approved">0</span>
+          </div>
+          <div class="flex-1 overflow-y-auto board-scroll pr-1 flex flex-col gap-4" data-status="approved"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+/* ==== Inlined state.js + board.js, with the API replaced by a local store ==== */
+const COLORS = ["lime", "sunny", "aqua", "pink"];
+
+// --- Local state (single source of truth). Mirrors the server's in-memory dict. ---
+const BoardState = {
+  tasks: new Map(),
+  _nextId: 1,
+  seed(list) { list.forEach((t) => this.create(t)); },
+  create(t) { const id = this._nextId++; const task = { id, project_code: "DEMO-123", ...t };
+              this.tasks.set(id, task); return task; },
+  get(id) { return this.tasks.get(id); },
+  update(id, changes) { const task = { ...this.tasks.get(id), ...changes }; this.tasks.set(id, task); return task; },
+  byStatus(s) { return [...this.tasks.values()].filter((t) => t.status === s); },
+};
+
+BoardState.seed([
+  { title: "Create new glassmorphism icons for dashboard", username: "Jane Doe", assignee_initials: "JD", color: "sunny", status: "todo" },
+  { title: "Fix responsive layout on mobile Nav", username: "Mika K.", assignee_initials: "MK", color: "pink", status: "todo" },
+  { title: "Implement WebGL shader backgrounds", username: "Alex L.", assignee_initials: "AL", color: "aqua", status: "in_progress" },
+  { title: "Update typography tokens", username: "Mika K.", assignee_initials: "MK", color: "lime", status: "done" },
+]);
+
+function esc(s) { const d = document.createElement("div"); d.textContent = s ?? ""; return d.innerHTML; }
+function dotColor(c) { return { lime: "#b6ff6b", sunny: "#ffeb6b", aqua: "#6bf5ff", pink: "#ffa1e8" }[c]; }
+
+function cardHTML(task) {
+  const dots = COLORS.map((c) =>
+    `<span class="color-dot ${c === task.color ? "selected" : ""}" data-color="${c}" style="background:${dotColor(c)}"></span>`).join("");
+  return `
+    <div class="card-container sticky-${task.color}" data-id="${task.id}">
+      <div class="card-inner">
+        <div class="card-face card-face--front">
+          <div class="card-face__surface">
+            <div class="p-4 relative">
+              <div class="avatar-badge">${esc(task.assignee_initials)}</div>
+              <h3 class="font-label-sm text-[14px] font-bold text-on-surface leading-tight pr-8 js-title">${esc(task.title)}</h3>
+              <p class="text-[11px] text-on-surface-variant mt-1 js-username">${esc(task.username)}</p>
+            </div>
+            <div class="card-toolbar">
+              <span class="material-symbols-outlined" data-action="flip" title="Edit">edit</span>
+              <span class="material-symbols-outlined" data-action="flip" title="Flip">360</span>
+            </div>
+          </div>
+        </div>
+        <div class="card-face card-face--back">
+          <div class="card-face__surface">
+            <div class="p-3 flex flex-col gap-2 flex-1 overflow-y-auto">
+              <label class="text-[10px] font-bold opacity-70">Title</label>
+              <input class="edit-field js-edit-title" value="${esc(task.title)}">
+              <label class="text-[10px] font-bold opacity-70">Username</label>
+              <input class="edit-field js-edit-username" value="${esc(task.username)}">
+              <label class="text-[10px] font-bold opacity-70">Initials</label>
+              <input class="edit-field js-edit-initials" maxlength="3" value="${esc(task.assignee_initials)}">
+              <label class="text-[10px] font-bold opacity-70">Color</label>
+              <div class="flex gap-2">${dots}</div>
+            </div>
+            <div class="card-toolbar">
+              <span class="material-symbols-outlined" data-action="cancel" title="Cancel">undo</span>
+              <button class="btn-save" data-action="save">Save / Done</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function render() {
+  for (const status of ["todo", "in_progress", "done", "approved"]) {
+    const col = document.querySelector(`[data-status="${status}"]`);
+    const tasks = BoardState.byStatus(status);
+    col.innerHTML = tasks.map(cardHTML).join("");
+    document.querySelector(`[data-count="${status}"]`).textContent = tasks.length;
+  }
+}
+
+function populateForm(container, task) {
+  container.querySelector(".js-edit-title").value = task.title;
+  container.querySelector(".js-edit-username").value = task.username;
+  container.querySelector(".js-edit-initials").value = task.assignee_initials;
+  container.querySelectorAll(".color-dot").forEach((d) => d.classList.toggle("selected", d.dataset.color === task.color));
+}
+function applyColorClass(container, color) {
+  COLORS.forEach((c) => container.classList.remove(`sticky-${c}`));
+  container.classList.add(`sticky-${color}`);
+}
+function flipToBack(container) { populateForm(container, BoardState.get(Number(container.dataset.id))); container.classList.add("is-flipped"); }
+function flipToFront(container) { container.classList.remove("is-flipped"); }
+
+function saveCard(container) {
+  const id = Number(container.dataset.id);
+  const dot = container.querySelector(".color-dot.selected");
+  const updated = BoardState.update(id, {
+    title: container.querySelector(".js-edit-title").value.trim(),
+    username: container.querySelector(".js-edit-username").value.trim(),
+    assignee_initials: container.querySelector(".js-edit-initials").value.trim(),
+    color: dot ? dot.dataset.color : BoardState.get(id).color,
+  });
+  container.querySelector(".js-title").textContent = updated.title;
+  container.querySelector(".js-username").textContent = updated.username;
+  container.querySelector(".avatar-badge").textContent = updated.assignee_initials;
+  applyColorClass(container, updated.color);
+  flipToFront(container);
+}
+function cancelCard(container) { populateForm(container, BoardState.get(Number(container.dataset.id))); flipToFront(container); }
+
+function onBoardClick(evt) {
+  const container = evt.target.closest(".card-container");
+  if (!container) return;
+  const dot = evt.target.closest(".color-dot");
+  if (dot) {
+    container.querySelectorAll(".color-dot").forEach((d) => d.classList.remove("selected"));
+    dot.classList.add("selected");
+    return;
+  }
+  const actionEl = evt.target.closest("[data-action]");
+  if (!actionEl) return;
+  if (actionEl.dataset.action === "flip") flipToBack(container);
+  else if (actionEl.dataset.action === "save") saveCard(container);
+  else if (actionEl.dataset.action === "cancel") cancelCard(container);
+}
+
+function addTask() {
+  BoardState.create({ title: "New task", username: "Unassigned", assignee_initials: "??", color: "aqua", status: "todo" });
+  render();
+}
+
+const board = document.querySelector(".grid");
+board.addEventListener("click", onBoardClick);
+board.addEventListener("mousedown", (e) => { if (e.target.closest(".edit-field")) e.stopPropagation(); });
+document.getElementById("add-task-btn").addEventListener("click", addTask);
+render();
+</script>
+</body>
+</html>

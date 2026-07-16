@@ -1,0 +1,197 @@
+<!-- File: templates/index.html -->
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>AeroFlow - Kanban Board</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&amp;family=Work+Sans:wght@600&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: { extend: {
+      colors: {
+        "primary-container": "#0099ff", "on-background": "#191c1e", "secondary-container": "#6bfe9c",
+        "tertiary-container": "#cea700", "primary": "#0061a5", "secondary": "#006d37",
+        "error": "#ba1a1a", "surface-tint": "#0061a5", "on-surface": "#191c1e",
+        "on-surface-variant": "#3f4753", "background": "#f7f9fb", "surface": "#f7f9fb",
+        "on-primary": "#ffffff"
+      },
+      borderRadius: { "DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px" },
+      spacing: { "unit": "8px", "gutter-md": "24px" },
+      fontFamily: { "label-sm": ["Work Sans"], "headline-xl": ["Plus Jakarta Sans"],
+                    "headline-lg": ["Plus Jakarta Sans"], "body-md": ["Plus Jakarta Sans"] },
+      fontSize: {
+        "label-sm": ["12px", { "lineHeight": "1.2", "letterSpacing": "0.05em", "fontWeight": "600" }],
+        "headline-xl": ["48px", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+        "headline-lg": ["32px", { "lineHeight": "1.2", "fontWeight": "700" }],
+        "body-md": ["16px", { "lineHeight": "1.6", "fontWeight": "400" }]
+      }
+    } }
+  }
+</script>
+<link rel="stylesheet" href="/static/css/styles.css">
+</head>
+
+<body class="font-body-md text-on-surface antialiased h-screen overflow-hidden flex flex-col bg-transparent">
+
+<!-- TopNavBar -->
+<nav class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-gutter-md h-16 bg-white/20 backdrop-blur-xl border-b border-white/40 shadow-[0_4px_24px_0_rgba(0,0,0,0.05)]">
+  <div class="flex items-center gap-8">
+    <span class="font-headline-lg text-headline-lg font-bold tracking-tight text-primary drop-shadow-md">AeroFlow</span>
+    <div class="hidden md:flex gap-6">
+      <!-- Nav tabs switch main-canvas views (data-view) without a page reload. -->
+      <a class="nav-tab active-tab text-primary font-bold font-label-sm text-label-sm px-2" href="#" data-view="board">Sprint Board</a>
+      <a class="nav-tab text-on-surface-variant font-medium hover:text-primary transition-colors font-label-sm text-label-sm px-2 py-1" href="#" data-view="members">Members</a>
+      <a class="nav-tab text-on-surface-variant font-medium hover:text-primary transition-colors font-label-sm text-label-sm px-2 py-1" href="#" data-view="calendar">Calendar Grid</a>
+      <a class="nav-tab text-on-surface-variant font-medium hover:text-primary transition-colors font-label-sm text-label-sm px-2 py-1" href="#" data-view="resources">Resource Hub</a>
+    </div>
+  </div>
+  <div class="flex items-center gap-4">
+    <div class="relative hidden sm:block">
+      <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-surface-tint">search</span>
+      <input class="search-input pl-10 pr-4 py-1.5 rounded-full text-body-md focus:outline-none focus:ring-2 focus:ring-primary/50 w-64 backdrop-blur-md" placeholder="Search..." type="text">
+    </div>
+    <button id="add-task-btn" class="jelly-button px-6 py-2 rounded-full font-label-sm text-label-sm font-bold flex items-center gap-2 hover:scale-105 transition-transform">
+      <span class="material-symbols-outlined text-[18px]">add</span> Add New Task
+    </button>
+  </div>
+</nav>
+
+<div class="flex flex-1 pt-16 h-full relative z-10">
+
+  <!-- SideNavBar -->
+  <aside id="app-sidebar" class="hidden lg:flex flex-col border-r border-white/20 bg-white/10 backdrop-blur-xl z-40 p-4">
+    <div class="mb-8 px-2 flex items-center gap-3">
+      <div class="w-10 h-10 shrink-0 rounded-xl bg-gradient-to-br from-primary-container to-primary flex items-center justify-center shadow-lg border border-white/60">
+        <span class="material-symbols-outlined text-white">workspaces</span>
+      </div>
+      <div class="sidebar-label">
+        <h2 class="font-label-sm text-label-sm font-bold text-on-surface drop-shadow-sm whitespace-nowrap">Global Workspace</h2>
+        <p class="font-label-sm text-[10px] text-on-surface-variant drop-shadow-sm whitespace-nowrap">Productivity Suite</p>
+      </div>
+    </div>
+    <nav class="flex flex-col gap-2 flex-1 overflow-y-auto board-scroll">
+      <!-- Projects header row: label toggles the list, + opens the inline creator. -->
+      <div class="flex items-center rounded-xl hover:bg-white/10 transition-all">
+        <a class="side-link flex-1 flex items-center gap-3 px-4 py-3 rounded-xl" href="#" id="projects-toggle">
+          <span class="material-symbols-outlined shrink-0">account_tree</span><span class="sidebar-label font-label-sm text-label-sm whitespace-nowrap">Projects</span>
+        </a>
+        <button id="project-add-btn" class="sidebar-label shrink-0 mr-2 p-1 rounded-full text-primary hover:bg-white/40 transition-colors" title="New project">
+          <span class="material-symbols-outlined text-[20px]">add</span>
+        </button>
+      </div>
+      <!-- Populated by board.js; each button switches the active project workspace. -->
+      <div id="sidebar-project-list" class="sidebar-label flex flex-col gap-1 pl-2 ml-4 border-l border-white/30"></div>
+    </nav>
+    <div class="mt-auto flex flex-col gap-4">
+      <button id="sidebar-toggle" class="mr-auto p-2 rounded-full bg-white/20 hover:bg-white/40 transition-colors shadow-sm border border-white/30 text-on-surface flex items-center justify-center w-10 h-10 shrink-0">
+        <span id="sidebar-toggle-icon" class="material-symbols-outlined">keyboard_double_arrow_left</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Dashboard Canvas -->
+  <main class="flex-1 min-w-0 p-gutter-md h-full overflow-hidden flex flex-col">
+
+    <!-- Shared header: inline-editable project title + code. -->
+    <header class="mb-6 flex justify-between items-end shrink-0 bg-white/10 p-4 rounded-2xl backdrop-blur-md border border-white/30 shadow-sm">
+      <div class="min-w-0">
+        <div class="flex items-center gap-2 group">
+          <!-- Click the title (or the pencil) to edit inline. board.js swaps it for an input. -->
+          <h1 id="project-title" class="font-headline-xl text-headline-xl text-on-surface drop-shadow-md cursor-text truncate" title="Click to rename">Sprint Board</h1>
+          <button id="project-title-edit" class="opacity-0 group-hover:opacity-100 transition-opacity text-primary" title="Rename project">
+            <span class="material-symbols-outlined">edit</span>
+          </button>
+        </div>
+        <p class="font-body-md text-body-md text-on-surface mt-1 drop-shadow-sm font-medium flex items-center gap-2 flex-wrap">
+          <span class="code-badge">Project Code: <span id="project-code-label" class="font-bold">DEMO-123</span></span>
+          &middot; <span id="view-subtitle">Manage and track active tasks.</span>
+        </p>
+      </div>
+    </header>
+
+    <!-- ===================== VIEW: BOARD ===================== -->
+    <section id="view-board" class="view flex-1 overflow-hidden w-full">
+      <div class="grid grid-cols-4 gap-6 h-full px-2 py-2">
+        <div class="glass-tray rounded-3xl p-4 flex flex-col gap-4 h-full min-h-0">
+          <div class="glass-panel rounded-full px-4 py-2 flex justify-between items-center">
+            <span class="font-label-sm text-label-sm font-bold text-on-surface flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-tertiary-container shadow-[0_0_8px_rgba(206,167,0,0.8)]"></span> To-Do
+            </span>
+            <span class="count-badge bg-white/60 px-2 py-0.5 rounded-full font-label-sm text-[10px] shadow-sm" data-count="todo">0</span>
+          </div>
+          <div class="flex-1 overflow-y-auto board-scroll pr-1 flex flex-col gap-4" data-status="todo"></div>
+        </div>
+        <div class="glass-tray rounded-3xl p-4 flex flex-col gap-4 h-full min-h-0">
+          <div class="glass-panel rounded-full px-4 py-2 flex justify-between items-center">
+            <span class="font-label-sm text-label-sm font-bold text-on-surface flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-primary shadow-[0_0_8px_rgba(0,153,255,0.8)] animate-pulse"></span> In Progress
+            </span>
+            <span class="count-badge bg-white/60 px-2 py-0.5 rounded-full font-label-sm text-[10px] shadow-sm" data-count="in_progress">0</span>
+          </div>
+          <div class="flex-1 overflow-y-auto board-scroll pr-1 flex flex-col gap-4" data-status="in_progress"></div>
+        </div>
+        <div class="glass-tray rounded-3xl p-4 flex flex-col gap-4 h-full min-h-0">
+          <div class="glass-panel rounded-full px-4 py-2 flex justify-between items-center">
+            <span class="font-label-sm text-label-sm font-bold text-on-surface flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-secondary shadow-[0_0_8px_rgba(0,109,55,0.8)]"></span> Done
+            </span>
+            <span class="count-badge bg-white/60 px-2 py-0.5 rounded-full font-label-sm text-[10px] shadow-sm" data-count="done">0</span>
+          </div>
+          <div class="flex-1 overflow-y-auto board-scroll pr-1 flex flex-col gap-4" data-status="done"></div>
+        </div>
+        <div class="glass-tray rounded-3xl p-4 flex flex-col gap-4 h-full min-h-0">
+          <div class="glass-panel rounded-full px-4 py-2 flex justify-between items-center">
+            <span class="font-label-sm text-label-sm font-bold text-on-surface flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-primary-container shadow-[0_0_8px_rgba(0,153,255,0.8)]"></span> Approved
+            </span>
+            <span class="count-badge bg-white/60 px-2 py-0.5 rounded-full font-label-sm text-[10px] shadow-sm" data-count="approved">0</span>
+          </div>
+          <div class="flex-1 overflow-y-auto board-scroll pr-1 flex flex-col gap-4" data-status="approved"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== VIEW: MEMBERS ===================== -->
+    <section id="view-members" class="view hidden flex-1 overflow-y-auto board-scroll">
+      <div id="members-grid" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 p-2"></div>
+    </section>
+
+    <!-- ===================== VIEW: CALENDAR (Mon–Sun) ===================== -->
+    <section id="view-calendar" class="view hidden flex-1 overflow-y-auto board-scroll flex flex-col gap-4 p-2">
+      <div>
+        <h3 class="font-label-sm text-label-sm font-bold text-on-surface mb-2 drop-shadow-sm">Unscheduled</h3>
+        <div id="calendar-unscheduled" class="glass-tray rounded-2xl p-3 flex flex-wrap gap-3 min-h-[70px]"></div>
+      </div>
+      <div id="calendar-grid" class="grid grid-cols-7 gap-3 flex-1 min-h-0"></div>
+    </section>
+
+    <!-- ===================== VIEW: RESOURCES (Link Hub) ===================== -->
+    <section id="view-resources" class="view hidden flex-1 overflow-y-auto board-scroll p-2 flex flex-col gap-6">
+      <form id="resource-form" class="glass-tray rounded-2xl p-4 flex flex-wrap gap-3 items-end">
+        <div class="flex flex-col gap-1">
+          <label class="text-[10px] font-bold opacity-70">Title</label>
+          <input id="res-title" class="edit-field w-48" placeholder="e.g. Figma Board" required>
+        </div>
+        <div class="flex flex-col gap-1">
+          <label class="text-[10px] font-bold opacity-70">URL</label>
+          <input id="res-url" class="edit-field w-64" placeholder="https://..." type="url" required>
+        </div>
+        <div class="flex flex-col gap-1">
+          <label class="text-[10px] font-bold opacity-70">Category</label>
+          <input id="res-category" class="edit-field w-40" placeholder="GitHub / Drive / ...">
+        </div>
+        <button class="btn-save" type="submit">Add Link</button>
+      </form>
+      <div id="resources-list" class="flex flex-col gap-6"></div>
+    </section>
+
+  </main>
+</div>
+
+<script type="module" src="/static/js/board.js"></script>
+</body>
+</html>
