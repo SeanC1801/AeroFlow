@@ -95,6 +95,16 @@ function subtaskReadHTML(st) {
     </label>`;
 }
 
+function buildAssigneeOptions(task) {
+  const members = BoardState.currentProject?.members || [];
+  let html = `<option value="Unassigned" data-initials="??">Unassigned</option>`;
+  for (const m of members) {
+    const sel = (m.name === task.username) ? "selected" : "";
+    html += `<option value="${esc(m.name)}" data-initials="${esc(m.initials)}" ${sel}>${esc(m.name)} (${esc(m.initials)})</option>`;
+  }
+  return html;
+}
+
 function cardHTML(task) {
   const colorDots = COLORS.map(
     (c) => `<span class="color-dot sticky-${c} ${c === task.color ? "selected" : ""}"
@@ -163,6 +173,9 @@ function cardHTML(task) {
             <!-- PRIMARY reading/execution space (dominates the card back) -->
             <div class="card-back-main p-3 flex flex-col gap-2 board-scroll">
               <input class="edit-field js-edit-title font-bold" value="${esc(task.title)}" placeholder="Title">
+
+              <label class="text-[10px] font-bold opacity-70">Assignee</label>
+              <select class="assignee-select js-edit-assignee">${buildAssigneeOptions(task)}</select>
 
               <label class="text-[10px] font-bold opacity-70">Description</label>
               <textarea class="edit-textarea js-edit-desc flex-1" style="min-height:80px" placeholder="Detailed notes & instructions...">${esc(task.description)}</textarea>
@@ -275,6 +288,9 @@ function populateForm(container, task) {
   container.querySelector(".js-edit-initials").value = task.assignee_initials;
   container.querySelector(".js-subtasks").innerHTML = (task.subtasks || []).map(subtaskRowHTML).join("");
   container.querySelectorAll(".color-dot").forEach((d) => d.classList.toggle("selected", d.dataset.color === task.color));
+  // Refresh assignee select with current project members.
+  const assigneeSelect = container.querySelector(".js-edit-assignee");
+  if (assigneeSelect) assigneeSelect.innerHTML = buildAssigneeOptions(task);
 }
 
 function gatherSubtasks(container) {
@@ -288,12 +304,15 @@ function gatherSubtasks(container) {
 async function saveCard(container) {
   const id = Number(container.dataset.id);
   const selectedDot = container.querySelector(".color-dot.selected");
+  const assigneeSelect = container.querySelector(".js-edit-assignee");
+  const selectedOption = assigneeSelect?.selectedOptions[0];
   const changes = {
     title: container.querySelector(".js-edit-title").value.trim(),
     description: container.querySelector(".js-edit-desc").value,
     deliverable_url: container.querySelector(".js-edit-url").value.trim(),
     due_day: container.querySelector(".js-edit-day").value,
-    assignee_initials: container.querySelector(".js-edit-initials").value.trim(),
+    assignee_initials: selectedOption ? (selectedOption.dataset.initials || container.querySelector(".js-edit-initials").value.trim()) : container.querySelector(".js-edit-initials").value.trim(),
+    username: selectedOption ? selectedOption.value : "Unassigned",
     color: selectedDot ? selectedDot.dataset.color : BoardState.get(id).color,
     subtasks: gatherSubtasks(container),
   };
@@ -442,7 +461,7 @@ function renderMembers() {
 // CALENDAR VIEW (Monday–Sunday)
 // ===========================================================================
 function miniCardHTML(task) {
-  return `<div class="mini-card sticky-${task.color}" style="background:${dotColor(task.color)}55">
+  return `<div class="mini-card sticky-${task.color}" draggable="true" data-id="${task.id}" style="background:${dotColor(task.color)}55">
             ${esc(task.title)}<br><span class="mini-badge">${esc(task.assignee_initials)}</span>
           </div>`;
 }
@@ -454,16 +473,50 @@ function renderCalendar() {
   grid.innerHTML = DAYS.map((day) => {
     const dayTasks = tasks.filter((t) => t.due_day === day);
     return `
-      <div class="calendar-day">
+      <div class="calendar-day" data-cal-day="${day}">
         <div class="calendar-day-header">${day.slice(0, 3)}</div>
-        ${dayTasks.map(miniCardHTML).join("") || `<span class="text-[10px] opacity-40 text-center mt-2">—</span>`}
+        ${dayTasks.map(miniCardHTML).join("") || `<span class="text-[10px] opacity-40 text-center mt-2">--</span>`}
       </div>`;
   }).join("");
 
   const none = tasks.filter((t) => !t.due_day);
   unscheduled.innerHTML = none.length
     ? none.map(miniCardHTML).join("")
-    : `<span class="text-[11px] opacity-50">Everything is scheduled 🎉</span>`;
+    : `<span class="text-[11px] opacity-50">Everything is scheduled!</span>`;
+
+  wireCalendarDnD();
+}
+
+// ===========================================================================
+// CALENDAR DRAG-AND-DROP
+// ===========================================================================
+function wireCalendarDnD() {
+  const dropZones = document.querySelectorAll("[data-cal-day]");
+  dropZones.forEach((zone) => {
+    zone.addEventListener("dragover", (e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; zone.classList.add("cal-drag-over"); });
+    zone.addEventListener("dragleave", (e) => { if (!zone.contains(e.relatedTarget)) zone.classList.remove("cal-drag-over"); });
+    zone.addEventListener("drop", async (e) => {
+      e.preventDefault();
+      zone.classList.remove("cal-drag-over");
+      const id = Number(e.dataTransfer.getData("text/plain"));
+      if (!id) return;
+      const newDay = zone.dataset.calDay;  // "" for unscheduled, "Monday" etc.
+      try {
+        const updated = await apiPatchTask(id, { due_day: newDay });
+        BoardState.upsert(updated);
+        renderCalendar();
+      } catch (err) { console.error(err); alert("Could not update due day."); }
+    });
+  });
+  // Drag start on mini-cards
+  document.querySelectorAll(".mini-card[draggable]").forEach((card) => {
+    card.addEventListener("dragstart", (e) => {
+      card.classList.add("dragging");
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData("text/plain", card.dataset.id);
+    });
+    card.addEventListener("dragend", () => card.classList.remove("dragging"));
+  });
 }
 
 // ===========================================================================
@@ -667,6 +720,168 @@ async function deleteProject(code) {
 }
 
 // ===========================================================================
+// COMMAND PALETTE — /summary and /filter
+// ===========================================================================
+function generateStandup() {
+  const tasks = BoardState.all();
+  const project = BoardState.currentProject;
+  const total = tasks.length;
+  const completed = tasks.filter((t) => t.status === "done" || t.status === "approved").length;
+  const pct = total ? Math.round((completed / total) * 100) : 0;
+
+  // Active workload (in_progress tasks grouped by member).
+  const inProgress = tasks.filter((t) => t.status === "in_progress");
+  const byMember = {};
+  for (const t of inProgress) {
+    const name = t.username || "Unassigned";
+    (byMember[name] ||= []).push(t.title);
+  }
+  let workloadBlock = "";
+  if (Object.keys(byMember).length) {
+    for (const [name, titles] of Object.entries(byMember)) {
+      workloadBlock += `  ${name}:\n`;
+      for (const title of titles) workloadBlock += `    - ${title}\n`;
+    }
+  } else {
+    workloadBlock = "  (none currently in progress)\n";
+  }
+
+  // Recently completed wins.
+  const wins = tasks.filter((t) => t.status === "done" || t.status === "approved");
+  let winsBlock = "";
+  if (wins.length) {
+    for (const t of wins) winsBlock += `  - ${t.title}  (${t.username})\n`;
+  } else {
+    winsBlock = "  (none yet)\n";
+  }
+
+  const today = new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+
+  return `DAILY STANDUP REPORT
+${project?.name || "Project"} (${BoardState.projectCode})
+${today}
+${"-".repeat(48)}
+
+PROJECT PROGRESS
+  ${completed}/${total} tasks complete (${pct}%)
+  ${"|" + "#".repeat(Math.round(pct / 5)) + "-".repeat(20 - Math.round(pct / 5)) + "|"} ${pct}%
+
+ACTIVE WORKLOAD (In Progress)
+${workloadBlock}
+RECENTLY COMPLETED
+${winsBlock}
+${"-".repeat(48)}
+Generated by AeroFlow`;
+}
+
+function showSummaryModal(text) {
+  el("summary-content").textContent = text;
+  el("summary-modal").classList.remove("hidden");
+}
+
+function applyFilter(query) {
+  const q = query.toLowerCase();
+  // Board cards
+  document.querySelectorAll(".card-container[data-id]").forEach((card) => {
+    const task = BoardState.get(Number(card.dataset.id));
+    if (!task) return;
+    const match = task.title.toLowerCase().includes(q) || task.username.toLowerCase().includes(q);
+    card.classList.toggle("filter-dim", !match);
+  });
+  // Calendar mini-cards
+  document.querySelectorAll(".mini-card[data-id]").forEach((card) => {
+    const task = BoardState.get(Number(card.dataset.id));
+    if (!task) return;
+    const match = task.title.toLowerCase().includes(q) || task.username.toLowerCase().includes(q);
+    card.classList.toggle("filter-dim", !match);
+  });
+}
+
+function clearFilter() {
+  document.querySelectorAll(".filter-dim").forEach((el) => el.classList.remove("filter-dim"));
+}
+
+function initCommandPalette() {
+  const input = el("command-input");
+  const dropdown = el("command-dropdown");
+  if (!input || !dropdown) return;
+
+  input.addEventListener("input", () => {
+    const v = input.value.trim();
+    // Show/hide command dropdown on sole "/"
+    if (v === "/") {
+      dropdown.classList.remove("hidden");
+    } else {
+      dropdown.classList.add("hidden");
+    }
+    // Live filter logic
+    if (v.startsWith("/filter ") && v.length > 8) {
+      applyFilter(v.slice(8));
+    } else {
+      clearFilter();
+    }
+  });
+
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      const v = input.value.trim().toLowerCase();
+      if (v === "/summary" || v === "/standup") {
+        e.preventDefault();
+        showSummaryModal(generateStandup());
+        input.value = "";
+        dropdown.classList.add("hidden");
+        clearFilter();
+      } else if (v.startsWith("/filter ") && v.length > 8) {
+        e.preventDefault();
+        applyFilter(v.slice(8));
+        dropdown.classList.add("hidden");
+      }
+    }
+    if (e.key === "Escape") {
+      dropdown.classList.add("hidden");
+      input.value = "";
+      clearFilter();
+      input.blur();
+    }
+  });
+
+  // Command option click -> fill input
+  dropdown.addEventListener("click", (e) => {
+    const opt = e.target.closest(".command-option");
+    if (!opt) return;
+    const cmd = opt.dataset.cmd;
+    input.value = cmd;
+    dropdown.classList.add("hidden");
+    input.focus();
+    // If the command has no trailing space (like /summary), execute immediately.
+    if (!cmd.endsWith(" ")) {
+      if (cmd === "/summary") showSummaryModal(generateStandup());
+      input.value = "";
+    }
+  });
+
+  // Click outside closes dropdown
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest("#command-input") && !e.target.closest("#command-dropdown")) {
+      dropdown.classList.add("hidden");
+    }
+  });
+
+  // Summary modal controls
+  el("summary-close").addEventListener("click", () => el("summary-modal").classList.add("hidden"));
+  el("summary-modal").addEventListener("click", (e) => { if (e.target === el("summary-modal")) el("summary-modal").classList.add("hidden"); });
+  el("summary-copy").addEventListener("click", () => {
+    const text = el("summary-content").textContent;
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = el("summary-copy");
+      const orig = btn.innerHTML;
+      btn.innerHTML = `<span class="material-symbols-outlined text-[16px]">check</span> Copied!`;
+      setTimeout(() => { btn.innerHTML = orig; }, 1800);
+    });
+  });
+}
+
+// ===========================================================================
 // Boot
 // ===========================================================================
 async function init() {
@@ -724,6 +939,9 @@ async function init() {
   // --- Sidebar collapse ---
   el("sidebar-toggle").addEventListener("click", () =>
     el("app-sidebar").classList.toggle("sidebar-collapsed"));
+
+  // --- Command palette ---
+  initCommandPalette();
 }
 
 init();

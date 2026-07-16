@@ -482,3 +482,98 @@ body {
     from { opacity: 0; transform: translateY(-6px); }
     to   { opacity: 1; transform: translateY(0); }
 }
+
+/* ============================================================================
+   COMMAND PALETTE
+   ========================================================================== */
+.command-dropdown {
+    position: absolute; top: calc(100% + 8px); left: 0; right: 0;
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255,255,255,0.9);
+    border-radius: 0.9rem; padding: 0.5rem;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.18), inset 0 1px 2px rgba(255,255,255,0.9);
+    z-index: 100;
+    animation: slideDown 0.15s ease;
+}
+.command-option {
+    display: flex; align-items: center; gap: 0.6rem; width: 100%;
+    padding: 0.6rem 0.75rem; border-radius: 0.6rem; font-size: 13px;
+    color: #191c1e; text-align: left; background: transparent;
+    transition: background 0.12s ease;
+}
+.command-option:hover {
+    background: rgba(0,153,255,0.12);
+}
+.command-option strong { color: #0061a5; }
+
+/* ============================================================================
+   STANDUP SUMMARY MODAL
+   ========================================================================== */
+.summary-modal-overlay {
+    position: fixed; inset: 0; z-index: 200;
+    background: rgba(0,0,0,0.35);
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    display: flex; align-items: center; justify-content: center;
+    animation: fadeIn 0.2s ease;
+}
+.summary-modal-overlay.hidden { display: none; }
+.summary-modal {
+    width: 90%; max-width: 620px; max-height: 80vh;
+    background: rgba(255,255,255,0.88);
+    backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px);
+    border: 1px solid rgba(255,255,255,0.9);
+    border-radius: 1.5rem; padding: 2rem;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2), inset 0 1px 3px rgba(255,255,255,0.9);
+    display: flex; flex-direction: column;
+}
+.summary-content {
+    flex: 1; overflow-y: auto;
+    font-family: 'Plus Jakarta Sans', monospace; font-size: 13px; line-height: 1.7;
+    color: #191c1e; white-space: pre-wrap; word-break: break-word;
+    background: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.7);
+    border-radius: 0.75rem; padding: 1.25rem;
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* ============================================================================
+   CALENDAR DRAG-AND-DROP
+   ========================================================================== */
+.calendar-day[data-cal-day].cal-drag-over,
+[data-cal-day].cal-drag-over {
+    outline: 2px dashed rgba(0,153,255,0.8);
+    outline-offset: -4px;
+    box-shadow: 0 0 24px rgba(0,153,255,0.45), inset 0 0 16px rgba(255,255,255,0.3);
+    background: rgba(0,153,255,0.08);
+}
+.mini-card[draggable="true"] { cursor: grab; }
+.mini-card.dragging { opacity: 0.4; transform: scale(0.95); }
+
+/* ============================================================================
+   FILTER DIM (cards that don't match /filter)
+   ========================================================================== */
+.card-container.filter-dim {
+    opacity: 0.15;
+    filter: blur(2px);
+    pointer-events: none;
+    transition: opacity 0.25s ease, filter 0.25s ease;
+}
+.mini-card.filter-dim {
+    opacity: 0.15;
+    filter: blur(2px);
+    pointer-events: none;
+    transition: opacity 0.25s ease, filter 0.25s ease;
+}
+
+/* ============================================================================
+   ASSIGNEE SELECT (card edit mode)
+   ========================================================================== */
+.assignee-select {
+    width: 100%;
+    background: rgba(255,255,255,0.55);
+    border: 1px solid rgba(255,255,255,0.7);
+    border-radius: 0.5rem;
+    padding: 0.3rem 0.4rem;
+    font-size: 12px;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.08);
+}

@@ -51,12 +51,14 @@
   </div>
   <div class="flex items-center gap-4">
     <div class="relative hidden sm:block">
-      <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-surface-tint">search</span>
-      <input class="search-input pl-10 pr-4 py-1.5 rounded-full text-body-md focus:outline-none focus:ring-2 focus:ring-primary/50 w-64 backdrop-blur-md" placeholder="Search..." type="text">
+      <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-surface-tint">terminal</span>
+      <input id="command-input" class="search-input pl-10 pr-4 py-1.5 rounded-full text-body-md focus:outline-none focus:ring-2 focus:ring-primary/50 w-72 backdrop-blur-md" placeholder="Type / for commands..." type="text" autocomplete="off">
+      <!-- Command palette dropdown -->
+      <div id="command-dropdown" class="command-dropdown hidden">
+        <button class="command-option" data-cmd="/summary"><span class="material-symbols-outlined text-[16px]">summarize</span><span><strong>/summary</strong> &mdash; Generate Daily Standup Report</span></button>
+        <button class="command-option" data-cmd="/filter "><span class="material-symbols-outlined text-[16px]">filter_alt</span><span><strong>/filter [text]</strong> &mdash; Dim non-matching cards</span></button>
+      </div>
     </div>
-    <button id="add-task-btn" class="jelly-button px-6 py-2 rounded-full font-label-sm text-label-sm font-bold flex items-center gap-2 hover:scale-105 transition-transform">
-      <span class="material-symbols-outlined text-[18px]">add</span> Add New Task
-    </button>
   </div>
 </nav>
 
@@ -111,6 +113,9 @@
           &middot; <span id="view-subtitle">Manage and track active tasks.</span>
         </p>
       </div>
+      <button id="add-task-btn" class="jelly-button px-6 py-2 rounded-full font-label-sm text-label-sm font-bold flex items-center gap-2 hover:scale-105 transition-transform shrink-0">
+        <span class="material-symbols-outlined text-[18px]">add</span> Add New Task
+      </button>
     </header>
 
     <!-- ===================== VIEW: BOARD ===================== -->
@@ -164,7 +169,7 @@
     <section id="view-calendar" class="view hidden flex-1 overflow-y-auto board-scroll flex flex-col gap-4 p-2">
       <div>
         <h3 class="font-label-sm text-label-sm font-bold text-on-surface mb-2 drop-shadow-sm">Unscheduled</h3>
-        <div id="calendar-unscheduled" class="glass-tray rounded-2xl p-3 flex flex-wrap gap-3 min-h-[70px]"></div>
+        <div id="calendar-unscheduled" class="glass-tray rounded-2xl p-3 flex flex-wrap gap-3 min-h-[70px]" data-cal-day=""></div>
       </div>
       <div id="calendar-grid" class="grid grid-cols-7 gap-3 flex-1 min-h-0"></div>
     </section>
@@ -190,6 +195,24 @@
     </section>
 
   </main>
+</div>
+
+<!-- Standup Summary Modal -->
+<div id="summary-modal" class="summary-modal-overlay hidden">
+  <div class="summary-modal">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="font-headline-lg text-[24px] font-bold text-on-surface">Daily Standup Report</h2>
+      <button id="summary-close" class="p-1 rounded-full hover:bg-white/40 transition-colors">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+    <pre id="summary-content" class="summary-content board-scroll"></pre>
+    <div class="flex justify-end mt-4 gap-3">
+      <button id="summary-copy" class="jelly-button px-5 py-2 rounded-full font-label-sm text-label-sm font-bold flex items-center gap-2 hover:scale-105 transition-transform">
+        <span class="material-symbols-outlined text-[16px]">content_copy</span> Copy to Clipboard
+      </button>
+    </div>
+  </div>
 </div>
 
 <script type="module" src="/static/js/board.js"></script>
