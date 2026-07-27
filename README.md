@@ -1,4 +1,4 @@
-# AeroFlow
+# AeroFlow by Heaven Caling
 
 **A beautiful, glassmorphic Kanban board for managing team projects and sprints.**
 
