@@ -1,29 +1,78 @@
 /* File: static/css/styles.css */
-/* All bespoke Frutiger Aero styling: aurora background, glassmorphism, 3D flip. */
+/* Smoked Emerald Glass — Vista Aurora + Dark Forest Glassmorphism */
+
+/* ============================================================================
+   GLOBAL BACKGROUND — Vista Aurora with PlayStation-style panning
+   ========================================================================== */
+@keyframes flowAurora {
+    0%   { background-position: 0% 50%; }
+    100% { background-position: 100% 50%; }
+}
 
 body {
-    background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDhcZSCl01TEvehdOYq5ME-XWb3QSOJQiSvTQugufzxYIBQWlWJswQOja1a7Ycoc_z37zNy4TXt39Wr3eYWY13bqmTPT68PAlAiiAvzg8Bfe6f5bO4xrCWb3iGIhj-qHqx1BscvufuZN1Xh5rj-i4ZlHqpl8nVgpn5uuSG6F_Ln3bk1-7uBpVm5XTLNfBmQheMv1ooc7gFehpy5zEAHPu2Zi6U915_Ncl7XmOd36hwUmN8wEQwHvKFKc5_fdyyBTXPjTIxU7YjQofmW');
-    background-size: cover;
-    background-position: center;
+    font-family: 'Frutiger Light', 'Frutiger Book', 'Frutiger', 'Segoe UI Light', 'Segoe UI', 'Trebuchet MS', sans-serif;
+    font-weight: 300;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDQyHuhIcIMnGGgXRUy7Xa1g3XTSZ4HRatKwXutxaQicM-fBZn0gfZeWJDvkjMFF-z1EnwRdWgSQBpkgY5BtcwvSASQhrOGihzDbHCTvMkYMHyiaMg-ZILz9RYSfepw0AmBl0OHSK3gYv0MitAULI4KSS4XJCtikyF_8HRqgLbWiMay0eDX5tszydnJBDMMdKhbT6doGM54HhKY3_17gFf6AvMLFBAMVWiXZZ4H5kTg0zmaqRSek64hd5CoRQVZbMInVNbvad4_ZPEM');
+    background-size: 120% 120%;
+    background-position: 0% 50%;
+    background-repeat: no-repeat;
     background-attachment: fixed;
+    animation: flowAurora 35s ease-in-out infinite alternate;
+    overflow: hidden;
 }
 
-/* ---- Glass surfaces --------------------------------------------------------- */
+/* ---- Frutiger Book/Light typography weight hierarchy ------------------------ */
+/* Body text, descriptions, calendar items: airy light weight */
+.ro-desc,
+.edit-field,
+.edit-textarea,
+.summary-content,
+.mini-card,
+.resource-item,
+.member-task-item,
+.command-option,
+.search-input,
+.code-badge {
+    font-weight: 300;
+}
+/* Headers, column titles, labels: crisp medium weight (no stroke heaviness) */
+.ro-title,
+.calendar-day-header,
+.nav-tab,
+.glass-panel span,
+.resource-category-title,
+.drawer-title,
+.ro-label {
+    font-weight: 500;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* ============================================================================
+   SMOKED EMERALD GLASS MATERIAL — reusable mixin via class
+   Dark forest-to-slate gradient + frosted blur + mint border + specular rim
+   ========================================================================== */
 .glass-panel {
-    background: rgba(255, 255, 255, 0.2);
+    background: linear-gradient(180deg, rgba(22, 48, 38, 0.75) 0%, rgba(12, 28, 22, 0.85) 100%);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.4);
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(140, 255, 190, 0.25);
+    box-shadow:
+        inset 0 1px 1px rgba(255, 255, 255, 0.45),
+        inset 0 -1px 2px rgba(0, 0, 0, 0.4),
+        0 8px 32px rgba(0, 0, 0, 0.45);
 }
+
 .glass-tray {
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-top: 1px solid rgba(255, 255, 255, 0.6);
-    border-left: 1px solid rgba(255, 255, 255, 0.5);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1), inset 0 2px 10px rgba(255,255,255,0.2);
+    background: linear-gradient(180deg, rgba(22, 48, 38, 0.75) 0%, rgba(12, 28, 22, 0.85) 100%);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(140, 255, 190, 0.25);
+    box-shadow:
+        inset 0 1px 1px rgba(255, 255, 255, 0.45),
+        inset 0 -1px 2px rgba(0, 0, 0, 0.4),
+        0 8px 32px rgba(0, 0, 0, 0.45);
 }
 
 /* =============================================================================
@@ -57,11 +106,14 @@ body {
     position: relative;
     width: 100%;
     height: 100%;
-    transition: transform 0.6s cubic-bezier(0.4, 0.0, 0.2, 1);
+    transition: transform 0.5s cubic-bezier(0.34, 1.3, 0.64, 1), box-shadow 0.15s ease-out;
+    will-change: transform;
     transform-style: preserve-3d;
+    transform: rotateY(0deg) scale(1) translateY(0);
 }
 .card-container.is-flipped .card-inner {
-    transform: rotateY(180deg);
+    transform: rotateY(180deg) scale(1) translateY(0) !important;
+    backface-visibility: hidden !important;
 }
 
 /* The face: ONLY handles 3D positioning + hiding its own backface. No filters. */
@@ -70,7 +122,7 @@ body {
     inset: 0;
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
-    border-radius: 0.75rem;
+    border-radius: 1.5rem;
 }
 .card-face--back {
     transform: rotateY(180deg);
@@ -89,7 +141,7 @@ body {
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border: 1px solid rgba(255, 255, 255, 0.9);
-    box-shadow: 0 4px 16px rgba(0,0,0,0.05), inset 0 1px 2px rgba(255,255,255,0.9);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12), inset 0 1px 4px rgba(255,255,255,0.8);
 }
 .card-face__surface::before {          /* the glossy top-half highlight */
     content: '';
@@ -99,32 +151,95 @@ body {
     pointer-events: none;
 }
 
-/* ---- Hover: 3D tilt + scale + glow (transform only, no DOM changes) --------- */
+/* ---- Hover: flat expansion + mint inset rim (no angular tilts) --------------- */
 .card-container:hover .card-inner {
-    transform: perspective(1000px) rotateX(4deg) rotateY(-4deg) scale(1.03);
+    transform: rotateY(0deg) scale(1.018) translateY(-1px) !important;
+    transition: transform 0.15s ease-out, box-shadow 0.15s ease-out, border-color 0.15s ease-out;
+}
+.card-container.is-flipped .card-inner {
+    transition: transform 0.5s cubic-bezier(0.34, 1.3, 0.64, 1), box-shadow 0.15s ease-out !important;
 }
 .card-container.is-flipped:hover .card-inner {
-    /* keep the flip when hovering the back, just add lift */
-    transform: rotateY(180deg) scale(1.03);
+    transform: rotateY(180deg) scale(1.018) translateY(-1px) !important;
+    box-shadow: 0 8px 24px rgba(0, 255, 136, 0.35) !important;
+    transition: transform 0.15s ease-out, box-shadow 0.15s ease-out !important;
 }
 .card-container:hover .card-face__surface {
-    box-shadow: 0 15px 30px rgba(0,0,0,0.12), inset 0 2px 5px rgba(255,255,255,1), 0 0 22px rgba(255,255,255,0.55);
+    border: 1px solid #00FF88 !important;
+    box-shadow: 0 6px 20px rgba(0, 255, 136, 0.25), inset 0 0 12px rgba(0, 255, 136, 0.15) !important;
+}
+/* Classic OS hover underline on card title text */
+.card-container:hover .js-title {
+    text-decoration: underline !important;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1.5px;
+}
+.card-container:hover .ro-title {
+    text-decoration: underline !important;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1.5px;
 }
 
-/* ---- Sticky-note color themes (map to schemas.Color) ------------------------ */
-.sticky-lime  .card-face__surface { background: linear-gradient(135deg, rgba(200,255,140,0.9), rgba(182,255,107,0.6)); }
-.sticky-sunny .card-face__surface { background: linear-gradient(135deg, rgba(255,245,160,0.9), rgba(255,235,107,0.6)); }
-.sticky-aqua  .card-face__surface { background: linear-gradient(135deg, rgba(170,250,255,0.9), rgba(107,245,255,0.6)); }
-.sticky-pink  .card-face__surface { background: linear-gradient(135deg, rgba(255,200,240,0.9), rgba(255,161,232,0.6)); }
+/* ---- Sticky-note color themes (map to schemas.Color) ---------------------- */
+/* Vibrant pastel candy colors float visually above the dark emerald trays */
+.sticky-lime  .card-face__surface { background: linear-gradient(135deg, #6bfe9c, #4ae183); border: 1px solid rgba(255,255,255,0.6); }
+.sticky-lime .js-title { color: #00210c !important; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 16px !important; }
+.sticky-lime .js-username { color: #005228 !important; }
+.sticky-lime .avatar-badge {
+    position: absolute; top: 1rem; right: 1rem;
+    width: 1.75rem; height: 1.75rem; border-radius: 9999px;
+    background: rgba(255,255,255,0.5); color: #0061a5;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 10px; font-family: 'Work Sans', sans-serif;
+    border: 1px solid rgba(255,255,255,0.8); backdrop-filter: blur(4px);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+.sticky-sunny .card-face__surface { background: linear-gradient(135deg, #ffe084, #eec209); border: 1px solid rgba(255,255,255,0.6); }
+.sticky-sunny .js-title { color: #4e3d00 !important; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 16px !important; }
+.sticky-sunny .js-username { color: #574500 !important; }
+.sticky-sunny .avatar-badge {
+    position: absolute; top: 1rem; right: 1rem;
+    width: 1.75rem; height: 1.75rem; border-radius: 9999px;
+    background: rgba(255,255,255,0.5); color: #0061a5;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 10px; font-family: 'Work Sans', sans-serif;
+    border: 1px solid rgba(255,255,255,0.8); backdrop-filter: blur(4px);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+.sticky-aqua  .card-face__surface { background: linear-gradient(135deg, #d2e4ff, #9fcaff); border: 1px solid rgba(255,255,255,0.6); }
+.sticky-aqua .js-title { color: #002f54 !important; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 16px !important; }
+.sticky-aqua .js-username { color: #00497e !important; }
+.sticky-aqua .avatar-badge {
+    position: absolute; top: 1rem; right: 1rem;
+    width: 1.75rem; height: 1.75rem; border-radius: 9999px;
+    background: rgba(255,255,255,0.5); color: #0061a5;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 10px; font-family: 'Work Sans', sans-serif;
+    border: 1px solid rgba(255,255,255,0.8); backdrop-filter: blur(4px);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+.sticky-pink  .card-face__surface { background: linear-gradient(135deg, #ffdad6, #ffb4ab); border: 1px solid rgba(255,255,255,0.6); }
+.sticky-pink .js-title { color: #3f0000 !important; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 16px !important; }
+.sticky-pink .js-username { color: #93000a !important; }
+.sticky-pink .avatar-badge {
+    position: absolute; top: 1rem; right: 1rem;
+    width: 1.75rem; height: 1.75rem; border-radius: 9999px;
+    background: rgba(255,255,255,0.5); color: #0061a5;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 10px; font-family: 'Work Sans', sans-serif;
+    border: 1px solid rgba(255,255,255,0.8); backdrop-filter: blur(4px);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
 
 /* ---- Card content bits ------------------------------------------------------ */
 .avatar-badge {
-    position: absolute; top: 0.5rem; right: 0.5rem;
+    position: absolute; top: 1rem; right: 1rem;
     width: 1.75rem; height: 1.75rem; border-radius: 9999px;
-    background: rgba(255,255,255,0.6); color: #0061a5;
+    background: rgba(255,255,255,0.5); color: #0061a5;
     display: flex; align-items: center; justify-content: center;
-    font-weight: 700; font-size: 10px;
+    font-weight: 700; font-size: 10px; font-family: 'Work Sans', sans-serif;
     border: 1px solid rgba(255,255,255,0.8); backdrop-filter: blur(4px);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
 }
 .card-toolbar {
     display: flex; justify-content: space-around; padding: 0.5rem;
@@ -152,56 +267,111 @@ body {
     width: 1.1rem; height: 1.1rem; border-radius: 9999px; cursor: pointer;
     border: 2px solid rgba(255,255,255,0.9); box-shadow: 0 1px 4px rgba(0,0,0,0.15);
 }
-.color-dot.selected { outline: 2px solid #0061a5; outline-offset: 1px; }
+.color-dot.selected { outline: 2px solid #20E070; outline-offset: 1px; }
 
-/* ---- Jelly buttons & inputs ------------------------------------------------- */
+/* ============================================================================
+   JELLY BUTTON — 3D Candy Emerald
+   ========================================================================== */
 .jelly-button {
-    background: linear-gradient(180deg, #0099ff, #0061a5);
-    box-shadow: 0 4px 15px rgba(0,153,255,0.4), inset 0 2px 6px rgba(255,255,255,0.6);
-    position: relative; overflow: hidden; border: 1px solid rgba(255,255,255,0.5); color: white;
+    background: linear-gradient(180deg, #20E070 0%, #10A040 100%);
+    box-shadow:
+        inset 0 1px 1px rgba(255,255,255,0.6),
+        0 4px 15px rgba(16, 160, 64, 0.5);
+    position: relative;
+    overflow: hidden;
+    border: 2px solid rgba(255, 255, 255, 0.8);
+    color: white;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    font-weight: 600;
 }
 .jelly-button::before {
     content: ''; position: absolute; top: 0; left: 10%; right: 10%; height: 40%;
     background: rgba(255,255,255,0.4); border-radius: 50%; filter: blur(1px);
 }
-.btn-save {
-    background: linear-gradient(180deg, #6bfe9c, #006d37); color: white;
-    border-radius: 9999px; padding: 0.3rem 0.9rem; font-size: 11px; font-weight: 700;
-    box-shadow: 0 3px 10px rgba(0,109,55,0.35), inset 0 1px 3px rgba(255,255,255,0.6);
+.jelly-button:hover {
+    transform: scale(1.018) translateY(-1px) !important;
+    border: 1px solid #00FF88 !important;
+    box-shadow:
+        0 6px 20px rgba(0, 255, 136, 0.25),
+        inset 0 0 12px rgba(0, 255, 136, 0.15) !important;
 }
+.btn-save {
+    background: linear-gradient(180deg, #20E070, #10A040); color: white;
+    border-radius: 9999px; padding: 0.3rem 0.9rem; font-size: 11px; font-weight: 700;
+    box-shadow: 0 3px 10px rgba(16,160,64,0.35), inset 0 1px 3px rgba(255,255,255,0.6);
+    border: 1px solid rgba(255,255,255,0.5);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+
+/* ============================================================================
+   SEARCH / COMMAND INPUT — force-patched dark 3D recessed well
+   ========================================================================== */
 .search-input {
-    background: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.6);
-    box-shadow: inset 0 2px 5px rgba(0,0,0,0.05);
+    background: rgba(8, 20, 15, 0.85) !important;
+    color: #E0FFEF !important;
+    border: 1px solid rgba(0, 255, 136, 0.3) !important;
+    border-radius: 20px !important;
+    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.8), 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+    font-size: 13px;
+}
+.search-input::placeholder {
+    color: #709080 !important;
+    font-weight: 400;
+}
+.search-input:focus {
+    outline: none !important;
+    border-color: #00FF88 !important;
+    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.8), 0 0 12px rgba(0, 255, 136, 0.4) !important;
 }
 
 /* ---- Scrollbar -------------------------------------------------------------- */
 .board-scroll::-webkit-scrollbar { width: 4px; }
 .board-scroll::-webkit-scrollbar-track { background: transparent; }
-.board-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.4); border-radius: 4px; }
+.board-scroll::-webkit-scrollbar-thumb { background: rgba(140, 255, 190, 0.3); border-radius: 4px; }
 
 /* ============================================================================
    SIDEBAR — width + collapse
-   The sidebar is a flex sibling of <main>. Animating its `width` (and letting
-   <main class="flex-1"> absorb the freed space) expands the board smoothly.
-   `min-w-0` on <main> is what lets the 4-column grid shrink instead of
-   overflowing when the sidebar is open.
    ========================================================================== */
 #app-sidebar {
     width: 16rem;                 /* expanded */
     flex-shrink: 0;
     overflow: hidden;
-    transition: width 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+    transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: width;
+    transform: translateZ(0);
+    /* Smoked Emerald glass */
+    background: linear-gradient(180deg, rgba(22, 48, 38, 0.75) 0%, rgba(12, 28, 22, 0.85) 100%);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-right: 1px solid rgba(140, 255, 190, 0.25);
+    box-shadow:
+        inset 0 1px 1px rgba(255, 255, 255, 0.45),
+        inset 0 -1px 2px rgba(0, 0, 0, 0.4),
+        0 8px 32px rgba(0, 0, 0, 0.45);
 }
 #app-sidebar.sidebar-collapsed {
-    width: 5rem;                  /* collapsed: icons only */
+    width: 68px !important;
+    min-width: 68px !important;
+    padding: 12px 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
-/* Hide text labels when collapsed; fade them for a smooth feel. */
-#app-sidebar .sidebar-label {
-    transition: opacity 0.2s ease;
+#app-sidebar.sidebar-collapsed .material-symbols-outlined, 
+#app-sidebar.sidebar-collapsed .logo-container, 
+#app-sidebar.sidebar-collapsed #sidebar-toggle { 
+    margin: 8px auto !important;
+    text-align: center !important;
+    justify-content: center !important;
+    width: 100% !important;
 }
-#app-sidebar.sidebar-collapsed .sidebar-label {
-    opacity: 0;
-    pointer-events: none;
+#app-sidebar.sidebar-collapsed span:not(.material-symbols-outlined), 
+#app-sidebar.sidebar-collapsed #sidebar-project-list, 
+#app-sidebar.sidebar-collapsed .project-code, 
+#app-sidebar.sidebar-collapsed #project-add-btn,
+#app-sidebar.sidebar-collapsed .sidebar-label { 
+    display: none !important; 
 }
 /* Flip the << chevron to >> when collapsed. */
 #app-sidebar.sidebar-collapsed #sidebar-toggle-icon {
@@ -217,12 +387,12 @@ body {
     opacity: 0.4;
     transform: scale(0.97);
 }
-/* Column highlight when a valid card hovers over it (Frutiger Aero glow). */
+/* Column highlight when a valid card hovers over it (emerald glow). */
 .drag-over {
-    outline: 2px dashed rgba(0, 153, 255, 0.8);
+    outline: 2px dashed rgba(32, 224, 112, 0.8);
     outline-offset: -6px;
-    box-shadow: 0 0 28px rgba(0, 153, 255, 0.55), inset 0 0 20px rgba(255, 255, 255, 0.35);
-    background: rgba(0, 153, 255, 0.06);
+    box-shadow: 0 0 28px rgba(32, 224, 112, 0.55), inset 0 0 20px rgba(140, 255, 190, 0.25);
+    background: rgba(32, 224, 112, 0.06);
 }
 
 /* ============================================================================
@@ -245,36 +415,75 @@ body {
 }
 
 /* ============================================================================
-   NAV TABS + VIEW SWITCHING
+   NAV TABS + VIEW SWITCHING — emerald active state
    ========================================================================== */
 .view { }                                  /* shown views; .hidden toggled by JS */
-.nav-tab.active-tab, .side-link.active-tab {
-    color: #0061a5; font-weight: 700;
+.nav-tab {
+    color: #FFFFFF;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+    font-weight: 600;
+    transition: transform 0.15s ease-out, box-shadow 0.15s ease-out, border-color 0.15s ease-out, color 0.15s ease-out;
 }
-.nav-tab.active-tab { border-bottom: 2px solid #0061a5; }
-.side-link { color: #191c1e; }
-.side-link:hover { background: rgba(255,255,255,0.2); }
+.nav-tab:hover {
+    color: rgba(140, 255, 190, 0.9);
+    transform: scale(1.018) translateY(-1px) !important;
+    text-decoration: underline !important;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1.5px;
+}
+.nav-tab.active-tab, .side-link.active-tab {
+    color: #FFFFFF;
+    font-weight: 700;
+}
+.nav-tab.active-tab {
+    border-bottom: 2px solid #20E070;
+}
+.side-link {
+    color: #B0D0C0;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+    transition: transform 0.15s ease-out, box-shadow 0.15s ease-out, border-color 0.15s ease-out, color 0.15s ease-out;
+}
+.side-link:hover {
+    background: rgba(140, 255, 190, 0.1);
+    color: #FFFFFF;
+    transform: scale(1.018) translateY(-1px) !important;
+    border: 1px solid #00FF88 !important;
+    box-shadow: 0 6px 20px rgba(0, 255, 136, 0.25), inset 0 0 12px rgba(0, 255, 136, 0.15) !important;
+    text-decoration: underline !important;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1.5px;
+}
 .side-link.active-tab {
-    background: rgba(255,255,255,0.3); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.5);
+    background: rgba(140, 255, 190, 0.15);
+    box-shadow: inset 0 0 0 1px rgba(140, 255, 190, 0.3);
+    color: #FFFFFF;
 }
 
 /* Inline title edit input (matches the headline size). */
 #project-title-input {
     font-size: 48px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1;
-    background: rgba(255,255,255,0.6); border: 1px solid rgba(0,97,165,0.4);
-    border-radius: 0.75rem; padding: 0 0.5rem; color: #191c1e; outline: none; max-width: 100%;
+    background: rgba(10, 25, 20, 0.6); border: 1px solid rgba(140, 255, 190, 0.3);
+    border-radius: 0.75rem; padding: 0 0.5rem; color: #FFFFFF; outline: none; max-width: 100%;
 }
 
 /* Sidebar project switcher buttons. */
 .project-switch-btn {
     text-align: left; padding: 0.4rem 0.6rem; border-radius: 0.6rem; font-size: 12px;
-    color: #3f4753; background: transparent; transition: all 0.15s ease; white-space: nowrap;
+    color: #B0D0C0; background: transparent; transition: all 0.15s ease-out; white-space: nowrap;
     overflow: hidden; text-overflow: ellipsis;
 }
-.project-switch-btn:hover { background: rgba(255,255,255,0.25); }
+.project-switch-btn:hover {
+    background: rgba(140, 255, 190, 0.12);
+    color: #FFFFFF;
+    transform: scale(1.018) translateY(-1px) !important;
+    box-shadow: 0 6px 20px rgba(0, 255, 136, 0.25), inset 0 0 12px rgba(0, 255, 136, 0.15) !important;
+    text-decoration: underline !important;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1.5px;
+}
 .project-switch-btn.active {
-    background: rgba(0,153,255,0.15); color: #0061a5; font-weight: 700;
-    box-shadow: inset 0 0 0 1px rgba(0,153,255,0.3);
+    background: rgba(32, 224, 112, 0.15); color: #FFFFFF; font-weight: 700;
+    box-shadow: inset 0 0 0 1px rgba(32, 224, 112, 0.3);
 }
 
 /* ============================================================================
@@ -362,12 +571,12 @@ body {
 }
 .member-avatar {
     width: 3.25rem; height: 3.25rem; border-radius: 9999px; flex-shrink: 0;
-    background: linear-gradient(135deg, #0099ff, #0061a5); color: white;
+    background: linear-gradient(135deg, #20E070, #10A040); color: white;
     display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 18px;
-    border: 2px solid rgba(255,255,255,0.8); box-shadow: 0 4px 12px rgba(0,97,165,0.4);
+    border: 2px solid rgba(255,255,255,0.8); box-shadow: 0 4px 12px rgba(16,160,64,0.4);
 }
 .member-count-pill {
-    background: rgba(0,153,255,0.15); color: #0061a5; font-weight: 700; font-size: 11px;
+    background: rgba(32,224,112,0.15); color: #10A040; font-weight: 700; font-size: 11px;
     padding: 0.15rem 0.6rem; border-radius: 9999px;
 }
 
@@ -376,13 +585,13 @@ body {
    ========================================================================== */
 .calendar-day {
     display: flex; flex-direction: column; gap: 0.5rem; min-height: 0;
-    background: rgba(255,255,255,0.08); backdrop-filter: blur(16px);
-    border: 1px solid rgba(255,255,255,0.3); border-radius: 1rem; padding: 0.5rem;
+    background: rgba(22, 48, 38, 0.5); backdrop-filter: blur(16px);
+    border: 1px solid rgba(140, 255, 190, 0.2); border-radius: 1rem; padding: 0.5rem;
     overflow-y: auto;
 }
 .calendar-day-header {
-    font-size: 11px; font-weight: 700; text-align: center; color: #3f4753;
-    padding-bottom: 0.35rem; border-bottom: 1px solid rgba(255,255,255,0.4);
+    font-size: 11px; font-weight: 700; text-align: center; color: #C0E0D0;
+    padding-bottom: 0.35rem; border-bottom: 1px solid rgba(140, 255, 190, 0.2);
     position: sticky; top: 0;
 }
 .mini-card {
@@ -397,11 +606,45 @@ body {
 }
 
 /* ============================================================================
+   CALENDAR VIEW — bright pastel candy mini-cards
+   Forces vivid 3D pastel gradients + dark legible text inside calendar columns
+   and unscheduled tray. Overrides any dark/muddy background inheritance.
+   ========================================================================== */
+#view-calendar .mini-card {
+    opacity: 1 !important;
+    filter: none !important;
+    background-blend-mode: normal !important;
+    color: #1A2E26 !important;
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 1px 3px rgba(255,255,255,0.85);
+}
+#view-calendar .mini-card.sticky-lime {
+    background: linear-gradient(135deg, rgba(200,255,140,0.92), rgba(182,255,107,0.7)) !important;
+}
+#view-calendar .mini-card.sticky-sunny {
+    background: linear-gradient(135deg, rgba(255,245,160,0.92), rgba(255,235,107,0.7)) !important;
+}
+#view-calendar .mini-card.sticky-aqua {
+    background: linear-gradient(135deg, rgba(170,250,255,0.92), rgba(107,245,255,0.7)) !important;
+}
+#view-calendar .mini-card.sticky-pink {
+    background: linear-gradient(135deg, rgba(255,200,240,0.92), rgba(255,161,232,0.7)) !important;
+}
+/* Hover: flat expansion + mint inset rim for calendar mini-cards */
+#view-calendar .mini-card:hover {
+    transform: scale(1.018) translateY(-1px) !important;
+    transition: transform 0.15s ease-out, box-shadow 0.15s ease-out, border-color 0.15s ease-out;
+    border: 1px solid #00FF88 !important;
+    box-shadow: 0 6px 20px rgba(0, 255, 136, 0.25), inset 0 0 12px rgba(0, 255, 136, 0.15) !important;
+}
+
+/* ============================================================================
    RESOURCE HUB
    ========================================================================== */
 .resource-category-title {
-    font-size: 13px; font-weight: 800; color: #0061a5; margin-bottom: 0.5rem;
+    font-size: 13px; font-weight: 800; color: #20E070; margin-bottom: 0.5rem;
     display: flex; align-items: center; gap: 0.4rem;
+    text-shadow: 0 0 8px rgba(32, 224, 112, 0.3);
 }
 .resource-item {
     display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem;
@@ -418,27 +661,23 @@ body {
    ========================================================================== */
 .code-badge {
     display: inline-flex; align-items: center; gap: 0.3rem;
-    background: rgba(0,153,255,0.12); color: #0061a5;
-    border: 1px solid rgba(0,153,255,0.25); border-radius: 9999px;
+    background: rgba(32,224,112,0.12); color: #20E070;
+    border: 1px solid rgba(32,224,112,0.25); border-radius: 9999px;
     padding: 0.1rem 0.7rem; font-size: 12px; font-weight: 600;
 }
 
 /* ============================================================================
-   CARD BACK — Execution Hub gets the room; styling is relegated to a drawer.
+   CARD BACK — Execution Hub
    ========================================================================== */
-/* The scrollable primary area (description / link / subtasks) fills the back. */
 .card-back-main { flex: 1; overflow-y: auto; }
 
-/* Tiny gear that lives in the bottom corner of the back toolbar. */
 .style-gear {
     color: #3f4753; cursor: pointer; transition: transform 0.15s ease, color 0.15s ease;
 }
-.style-gear:hover { color: #0061a5; transform: rotate(30deg) scale(1.1); }
+.style-gear:hover { color: #20E070; transform: rotate(30deg) scale(1.1); }
 
-/* The "Style & Assign" mini-drawer: slides up from the toolbar, over the card
-   back, WITHOUT pushing the description around. Hidden until .open. */
 .style-drawer {
-    position: absolute; left: 0; right: 0; bottom: 44px;   /* sits above the toolbar */
+    position: absolute; left: 0; right: 0; bottom: 44px;
     background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(255,255,255,0.8));
     backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
     border-top: 1px solid rgba(255,255,255,0.9);
@@ -472,9 +711,9 @@ body {
 /* Inline "new project" text box that slides open in the sidebar list. */
 .project-create-input {
     width: 100%; margin-top: 0.25rem;
-    background: rgba(255,255,255,0.7); border: 1px solid rgba(0,153,255,0.4);
-    border-radius: 0.6rem; padding: 0.4rem 0.6rem; font-size: 12px; color: #191c1e;
-    box-shadow: inset 0 1px 3px rgba(0,0,0,0.08), 0 0 12px rgba(0,153,255,0.25);
+    background: rgba(10, 25, 20, 0.6); border: 1px solid rgba(140, 255, 190, 0.4);
+    border-radius: 0.6rem; padding: 0.4rem 0.6rem; font-size: 12px; color: #C0E0D0;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.2), 0 0 12px rgba(32,224,112,0.2);
     outline: none;
     animation: slideDown 0.2s ease;
 }
@@ -488,63 +727,67 @@ body {
    ========================================================================== */
 .command-dropdown {
     position: absolute; top: calc(100% + 8px); left: 0; right: 0;
-    background: rgba(255,255,255,0.85);
+    background: linear-gradient(180deg, rgba(22, 48, 38, 0.92) 0%, rgba(12, 28, 22, 0.95) 100%);
     backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
-    border: 1px solid rgba(255,255,255,0.9);
+    border: 1px solid rgba(140, 255, 190, 0.25);
     border-radius: 0.9rem; padding: 0.5rem;
-    box-shadow: 0 12px 40px rgba(0,0,0,0.18), inset 0 1px 2px rgba(255,255,255,0.9);
+    box-shadow:
+        inset 0 1px 1px rgba(255, 255, 255, 0.3),
+        0 12px 40px rgba(0,0,0,0.4);
     z-index: 100;
     animation: slideDown 0.15s ease;
 }
 .command-option {
     display: flex; align-items: center; gap: 0.6rem; width: 100%;
     padding: 0.6rem 0.75rem; border-radius: 0.6rem; font-size: 13px;
-    color: #191c1e; text-align: left; background: transparent;
+    color: #C0E0D0; text-align: left; background: transparent;
     transition: background 0.12s ease;
 }
 .command-option:hover {
-    background: rgba(0,153,255,0.12);
+    background: rgba(32, 224, 112, 0.12);
 }
-.command-option strong { color: #0061a5; }
+.command-option strong { color: #20E070; }
 
 /* ============================================================================
    STANDUP SUMMARY MODAL
    ========================================================================== */
 .summary-modal-overlay {
     position: fixed; inset: 0; z-index: 200;
-    background: rgba(0,0,0,0.35);
-    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
     display: flex; align-items: center; justify-content: center;
     animation: fadeIn 0.2s ease;
 }
 .summary-modal-overlay.hidden { display: none; }
 .summary-modal {
     width: 90%; max-width: 620px; max-height: 80vh;
-    background: rgba(255,255,255,0.88);
+    background: linear-gradient(180deg, rgba(22, 48, 38, 0.92) 0%, rgba(12, 28, 22, 0.95) 100%);
     backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px);
-    border: 1px solid rgba(255,255,255,0.9);
+    border: 1px solid rgba(140, 255, 190, 0.25);
     border-radius: 1.5rem; padding: 2rem;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.2), inset 0 1px 3px rgba(255,255,255,0.9);
+    box-shadow:
+        inset 0 1px 1px rgba(255, 255, 255, 0.3),
+        0 20px 60px rgba(0,0,0,0.4);
     display: flex; flex-direction: column;
 }
 .summary-content {
     flex: 1; overflow-y: auto;
-    font-family: 'Plus Jakarta Sans', monospace; font-size: 13px; line-height: 1.7;
-    color: #191c1e; white-space: pre-wrap; word-break: break-word;
-    background: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.7);
+    font-family: 'Segoe UI', 'Plus Jakarta Sans', monospace; font-size: 13px; line-height: 1.7;
+    color: #C0E0D0; white-space: pre-wrap; word-break: break-word;
+    background: rgba(10, 25, 20, 0.5); border: 1px solid rgba(140, 255, 190, 0.2);
     border-radius: 0.75rem; padding: 1.25rem;
 }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
 /* ============================================================================
-   CALENDAR DRAG-AND-DROP
+   CALENDAR DRAG-AND-DROP — emerald glow
    ========================================================================== */
 .calendar-day[data-cal-day].cal-drag-over,
 [data-cal-day].cal-drag-over {
-    outline: 2px dashed rgba(0,153,255,0.8);
+    outline: 2px dashed rgba(32, 224, 112, 0.8);
     outline-offset: -4px;
-    box-shadow: 0 0 24px rgba(0,153,255,0.45), inset 0 0 16px rgba(255,255,255,0.3);
-    background: rgba(0,153,255,0.08);
+    box-shadow: 0 0 24px rgba(32, 224, 112, 0.45), inset 0 0 16px rgba(140, 255, 190, 0.2);
+    background: rgba(32, 224, 112, 0.08);
 }
 .mini-card[draggable="true"] { cursor: grab; }
 .mini-card.dragging { opacity: 0.4; transform: scale(0.95); }
@@ -566,14 +809,288 @@ body {
 }
 
 /* ============================================================================
-   ASSIGNEE SELECT (card edit mode)
+   ASSIGNEE INPUT (card edit mode)
    ========================================================================== */
-.assignee-select {
+.assignee-input {
     width: 100%;
     background: rgba(255,255,255,0.55);
     border: 1px solid rgba(255,255,255,0.7);
     border-radius: 0.5rem;
-    padding: 0.3rem 0.4rem;
+    padding: 0.35rem 0.5rem;
     font-size: 12px;
     box-shadow: inset 0 1px 3px rgba(0,0,0,0.08);
+}
+.assignee-input:focus { outline: none; box-shadow: 0 0 0 2px rgba(0,97,165,0.4); }
+
+/* ============================================================================
+   CROSS-TAB DROP TARGET (Calendar Grid nav tab) — emerald glow
+   ========================================================================== */
+.tab-drop-hover {
+    background: rgba(32, 224, 112, 0.2) !important;
+    box-shadow: 0 0 16px rgba(32, 224, 112, 0.5), inset 0 0 8px rgba(140, 255, 190, 0.3);
+    border-radius: 0.5rem;
+    transition: all 0.15s ease;
+}
+@keyframes tabPulse {
+    0%   { box-shadow: 0 0 0 0 rgba(32, 224, 112, 0.6); }
+    50%  { box-shadow: 0 0 18px 4px rgba(32, 224, 112, 0.4); }
+    100% { box-shadow: 0 0 0 0 rgba(32, 224, 112, 0); }
+}
+.tab-pulse {
+    animation: tabPulse 0.6s ease;
+    border-radius: 0.5rem;
+}
+
+/* ============================================================================
+   TOAST NOTIFICATION — dark emerald glass
+   ========================================================================== */
+.toast {
+    position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%);
+    background: linear-gradient(180deg, rgba(22, 48, 38, 0.9), rgba(12, 28, 22, 0.95));
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(140, 255, 190, 0.25);
+    border-radius: 9999px; padding: 0.6rem 1.5rem;
+    font-size: 13px; font-weight: 600; color: #C0E0D0;
+    box-shadow:
+        inset 0 1px 1px rgba(255, 255, 255, 0.3),
+        0 8px 30px rgba(0,0,0,0.3);
+    z-index: 300;
+    animation: toastIn 0.3s ease;
+}
+.toast.hidden { display: none; }
+@keyframes toastIn {
+    from { opacity: 0; transform: translateX(-50%) translateY(12px); }
+    to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* ============================================================================
+   MEMBER CARD ACCORDION (task overview)
+   ========================================================================== */
+.member-card {
+    cursor: pointer;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+}
+/* Ensure the name/role column doesn't collapse below a readable width */
+.member-card > .flex-1 {
+    flex: 1 1 0;
+    min-width: 120px;
+}
+/* Prevent count pill and toggle from overlapping the name/role area */
+.member-count-pill { flex-shrink: 0; }
+.member-toggle { flex-shrink: 0; }
+.member-toggle {
+    display: flex; align-items: center; gap: 0.3rem;
+    font-size: 11px; font-weight: 700; color: #10A040;
+    background: rgba(32,224,112,0.1); border: 1px solid rgba(32,224,112,0.25);
+    border-radius: 9999px; padding: 0.2rem 0.7rem;
+    cursor: pointer; transition: all 0.15s ease;
+}
+.member-toggle:hover { background: rgba(32,224,112,0.2); }
+.member-toggle .material-symbols-outlined {
+    font-size: 16px; transition: transform 0.25s ease;
+}
+.member-toggle.open .material-symbols-outlined { transform: rotate(180deg); }
+.member-task-list {
+    width: 100%; margin-top: 0.75rem;
+    display: flex; flex-direction: column; gap: 0.4rem;
+    animation: slideDown 0.2s ease;
+}
+.member-task-item {
+    display: flex; align-items: center; gap: 0.6rem;
+    padding: 0.5rem 0.75rem;
+    background: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.7);
+    border-radius: 0.6rem; font-size: 12px; color: #191c1e;
+}
+.member-task-item .status-badge {
+    font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em;
+    padding: 0.1rem 0.5rem; border-radius: 9999px; white-space: nowrap;
+}
+.status-badge.todo       { background: rgba(206,167,0,0.2);  color: #8a7000; }
+.status-badge.in_progress { background: rgba(0,97,165,0.15); color: #0061a5; }
+.status-badge.done       { background: rgba(0,109,55,0.15);  color: #006d37; }
+.status-badge.approved   { background: rgba(0,153,255,0.15); color: #0061a5; }
+
+/* ============================================================================
+   COLUMN HEADER PILLS (inside dark glass trays)
+   Glass pill with frosted white background for status indicators
+   ========================================================================== */
+.glass-tray > .glass-panel {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 1);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* ============================================================================
+   SEARCH ICON — force mint color for dark well contrast
+   ========================================================================== */
+#command-input ~ .material-symbols-outlined,
+.search-input ~ .material-symbols-outlined {
+    color: #00FF88 !important;
+}
+
+/* ============================================================================
+   HUD HELPER BAR — unobtrusive Frutiger Aero interaction affordance footer
+   ========================================================================== */
+.hud-helper-bar {
+    text-align: center;
+    font-size: 0.85rem;
+    font-weight: 400;
+    color: rgba(224, 255, 239, 0.65);
+    letter-spacing: 0.5px;
+    padding: 12px 0;
+    margin-top: 8px;
+    pointer-events: none;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+/* ============================================================================
+   SAFARI (WEBKIT) HARDWARE ACCELERATION & GEOMETRY FIXES
+   ========================================================================== */
+#view-members, #view-calendar, #view-resources {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    position: relative;
+    z-index: 1;
+}
+
+/* ============================================================================
+   STRICT VIEW ISOLATION
+   ========================================================================== */
+.view.hidden, #view-board.hidden, #view-members.hidden, #view-calendar.hidden, #view-resources.hidden {
+    display: none !important;
+}
+
+/* ============================================================================
+   KANBAN GRID RECOVERY & SAFARI HEIGHT ARMOR
+   ========================================================================== */
+/* The view wrapper must have explicit height to prevent Safari 0-height block collapse */
+#view-board {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+    width: 100% !important;
+}
+
+/* Primary Board Container: Enforce 4-column grid contract + bottom HUD clearance */
+#view-board .grid {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0px, 1fr)) !important;
+    gap: 16px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    height: 100% !important;
+    flex: 1 1 auto !important;
+    align-items: stretch !important;
+    padding-bottom: 80px !important;
+}
+
+/* Board column trays ONLY — scoped to prevent blowing up Calendar/Resource/Members views */
+#view-board .glass-tray {
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: 550px !important;
+    max-height: calc(100vh - 200px) !important;
+    overflow: hidden !important;
+    position: relative !important;
+    z-index: 5 !important;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    border-radius: 24px !important;
+    padding-bottom: 24px !important;
+    box-sizing: border-box !important;
+}
+
+/* Inner Task Drop-Zone Container Armor — board only */
+#view-board [data-status] {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+}
+
+/* ============================================================================
+   SMOKED EMERALD STYLING FOR INLINE ROLE EDITORS
+   ========================================================================== */
+.member-role-input {
+    background: rgba(10, 25, 20, 0.75) !important;
+    border: 1px solid rgba(0, 255, 136, 0.4) !important;
+    color: #00FF88 !important;
+    font-family: 'Frutiger Light', 'Segoe UI', sans-serif !important;
+    font-size: 0.85rem !important;
+    font-weight: 500 !important;
+    border-radius: 12px !important;
+    padding: 4px 10px !important;
+    text-align: center;
+    transition: all 0.15s ease-out;
+}
+.member-role-input:hover,
+.member-role-input:focus {
+    border-color: #00FF88 !important;
+    box-shadow: 0 0 10px rgba(0, 255, 136, 0.3) !important;
+    outline: none !important;
+    background: rgba(15, 35, 28, 0.9) !important;
+}
+
+/* ============================================================================
+   MEMBERS VIEW — let Tailwind grid handle layout, natural sizing
+   ========================================================================== */
+#view-members {
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+/* ============================================================================
+   SIDEBAR ICON RIGID GEOMETRY ARMOR
+   ========================================================================== */
+.logo-container, .workspace-icon, .sidebar-icon-circle {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    min-height: 40px !important;
+    max-width: 40px !important;
+    max-height: 40px !important;
+    flex-shrink: 0 !important;
+    flex-grow: 0 !important;
+    aspect-ratio: 1 / 1 !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+}
+
+/* ============================================================================
+   CALENDAR VIEW — strip height inflation, let content dictate height
+   ========================================================================== */
+#view-calendar > div {
+    height: auto !important;
+    min-height: 0 !important;
+    flex: 0 0 auto !important;
+}
+#view-calendar #calendar-grid {
+    margin-top: 16px !important;
+    height: auto !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+}
+
+/* ============================================================================
+   RESOURCE HUB — tight-hug form, content-driven height
+   ========================================================================== */
+#view-resources #resource-form {
+    height: auto !important;
+    min-height: 0 !important;
+    flex-grow: 0 !important;
+    flex-shrink: 0 !important;
+}
+#view-resources #resources-list {
+    margin-top: 24px !important;
+    height: auto !important;
 }

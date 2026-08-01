@@ -243,3 +243,15 @@ def delete_task(task_id: int):
     if task_id not in TASKS:
         raise HTTPException(status_code=404, detail=f"Task {task_id} not found")
     del TASKS[task_id]
+
+
+# --- Entry point -------------------------------------------------------------
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run(
+        "main:app",
+        host="127.0.0.1",
+        port=8000,
+        reload=True,
+    )

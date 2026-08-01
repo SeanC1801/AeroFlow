@@ -1,4 +1,7 @@
-<!DOCTYPE html>
+import re
+
+with open('templates/index.html', 'w') as f:
+    f.write("""<!DOCTYPE html>
 <html class="light" lang="en">
 <head>
 <meta charset="utf-8">
@@ -111,7 +114,7 @@
     }
   }
 </script>
-<link rel="stylesheet" href="/static/css/styles.css?v=12">
+<link rel="stylesheet" href="/static/css/styles.css?v=6">
 </head>
 
 <body class="font-body-md text-on-surface antialiased h-screen overflow-hidden flex flex-col" style="font-family: 'Segoe UI', 'Frutiger', 'Trebuchet MS', 'Tahoma', sans-serif; -webkit-font-smoothing: antialiased; background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDQyHuhIcIMnGGgXRUy7Xa1g3XTSZ4HRatKwXutxaQicM-fBZn0gfZeWJDvkjMFF-z1EnwRdWgSQBpkgY5BtcwvSASQhrOGihzDbHCTvMkYMHyiaMg-ZILz9RYSfepw0AmBl0OHSK3gYv0MitAULI4KSS4XJCtikyF_8HRqgLbWiMay0eDX5tszydnJBDMMdKhbT6doGM54HhKY3_17gFf6AvMLFBAMVWiXZZ4H5kTg0zmaqRSek64hd5CoRQVZbMInVNbvad4_ZPEM'); background-size: 120% 120%; background-position: 0% 50%; background-repeat: no-repeat; background-attachment: fixed; animation: flowAurora 35s ease-in-out infinite alternate; overflow: hidden;">
@@ -308,6 +311,64 @@
 <!-- Toast notification -->
 <div id="toast" class="toast hidden"></div>
 
-<script type="module" src="/static/js/board.js?v=13"></script>
+<script type="module" src="/static/js/board.js?v=4"></script>
 </body>
 </html>
+""")
+
+with open('static/css/styles.css', 'r') as f:
+    css = f.read()
+
+# Replace the gradient blocks
+css = re.sub(
+    r'\.sticky-lime\s+\.card-face__surface\s*\{[^\}]+\}',
+    '.sticky-lime  .card-face__surface { background: linear-gradient(135deg, #6bfe9c, #4ae183); border: 1px solid rgba(255,255,255,0.6); }\n'
+    '.sticky-lime .js-title { color: #00210c !important; font-family: \'Plus Jakarta Sans\', sans-serif; font-size: 16px !important; }\n'
+    '.sticky-lime .js-username { color: #005228 !important; }\n'
+    '.sticky-lime .avatar-badge { color: #006d37 !important; border: 1px solid rgba(255,255,255,0.8); background: rgba(255,255,255,0.5); }',
+    css
+)
+
+css = re.sub(
+    r'\.sticky-sunny\s+\.card-face__surface\s*\{[^\}]+\}',
+    '.sticky-sunny .card-face__surface { background: linear-gradient(135deg, #ffe084, #eec209); border: 1px solid rgba(255,255,255,0.6); }\n'
+    '.sticky-sunny .js-title { color: #4e3d00 !important; font-family: \'Plus Jakarta Sans\', sans-serif; font-size: 16px !important; }\n'
+    '.sticky-sunny .js-username { color: #574500 !important; }\n'
+    '.sticky-sunny .avatar-badge { color: #735c00 !important; border: 1px solid rgba(255,255,255,0.8); background: rgba(255,255,255,0.5); }',
+    css
+)
+
+css = re.sub(
+    r'\.sticky-aqua\s+\.card-face__surface\s*\{[^\}]+\}',
+    '.sticky-aqua  .card-face__surface { background: linear-gradient(135deg, #d2e4ff, #9fcaff); border: 1px solid rgba(255,255,255,0.6); }\n'
+    '.sticky-aqua .js-title { color: #002f54 !important; font-family: \'Plus Jakarta Sans\', sans-serif; font-size: 16px !important; }\n'
+    '.sticky-aqua .js-username { color: #00497e !important; }\n'
+    '.sticky-aqua .avatar-badge { color: #0061a5 !important; border: 1px solid rgba(255,255,255,0.8); background: rgba(255,255,255,0.5); }',
+    css
+)
+
+css = re.sub(
+    r'\.sticky-pink\s+\.card-face__surface\s*\{[^\}]+\}',
+    '.sticky-pink  .card-face__surface { background: linear-gradient(135deg, #ffdad6, #ffb4ab); border: 1px solid rgba(255,255,255,0.6); }\n'
+    '.sticky-pink .js-title { color: #3f0000 !important; font-family: \'Plus Jakarta Sans\', sans-serif; font-size: 16px !important; }\n'
+    '.sticky-pink .js-username { color: #93000a !important; }\n'
+    '.sticky-pink .avatar-badge { color: #93000a !important; border: 1px solid rgba(255,255,255,0.8); background: rgba(255,255,255,0.5); }',
+    css
+)
+
+css = re.sub(
+    r'\.avatar-badge\s*\{[^\}]+\}',
+    '.avatar-badge {\n'
+    '    position: absolute; top: 1rem; right: 1rem;\n'
+    '    width: 1.75rem; height: 1.75rem; border-radius: 9999px;\n'
+    '    background: rgba(255,255,255,0.5); color: #0061a5;\n'
+    '    display: flex; align-items: center; justify-content: center;\n'
+    '    font-weight: 700; font-size: 10px; font-family: \'Work Sans\', sans-serif;\n'
+    '    border: 1px solid rgba(255,255,255,0.8); backdrop-filter: blur(4px);\n'
+    '    box-shadow: 0 1px 2px rgba(0,0,0,0.05);\n'
+    '}',
+    css
+)
+
+with open('static/css/styles.css', 'w') as f:
+    f.write(css)

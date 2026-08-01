@@ -44,4 +44,53 @@ export const BoardState = {
   taskCountFor(initials) {
     return this.all().filter((t) => t.assignee_initials === initials).length;
   },
+
+  // ---- Dynamic Members registry -------------------------------------------
+  members: {},   // { "Sean C.": { role: "Backend Lead", initials: "SC" } }
+
+  /** Derive uppercase initials from a name string (e.g. "Sean Caling" → "SC"). */
+  _deriveInitials(name) {
+    return name.split(/\s+/).map((w) => w[0]?.toUpperCase() || "").join("").slice(0, 2) || "??";
+  },
+
+  /** Ensure a member exists in the registry; auto-register if unknown. */
+  ensureMember(name, initials) {
+    if (!name || name === "Unassigned") return;
+    if (!this.members[name]) {
+      this.members[name] = {
+        role: "Team Member",
+        initials: initials || this._deriveInitials(name),
+      };
+    }
+  },
+
+  /** Get a member record by name. */
+  getMember(name) { return this.members[name]; },
+
+  /** Update a member's role. */
+  setMemberRole(name, role) {
+    if (this.members[name]) this.members[name].role = role;
+  },
+
+  /** Return all registered members as an array of { name, role, initials }. */
+  allMembers() {
+    return Object.entries(this.members).map(([name, data]) => ({
+      name, role: data.role, initials: data.initials,
+    }));
+  },
+
+  /** Sync members from the current project's member list + all task assignees. */
+  syncMembers() {
+    // Seed from project members
+    const projMembers = this.currentProject?.members || [];
+    for (const m of projMembers) {
+      if (!this.members[m.name]) {
+        this.members[m.name] = { role: m.role || "Team Member", initials: m.initials };
+      }
+    }
+    // Seed from task assignees
+    for (const t of this.all()) {
+      this.ensureMember(t.username, t.assignee_initials);
+    }
+  },
 };

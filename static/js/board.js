@@ -95,15 +95,6 @@ function subtaskReadHTML(st) {
     </label>`;
 }
 
-function buildAssigneeOptions(task) {
-  const members = BoardState.currentProject?.members || [];
-  let html = `<option value="Unassigned" data-initials="??">Unassigned</option>`;
-  for (const m of members) {
-    const sel = (m.name === task.username) ? "selected" : "";
-    html += `<option value="${esc(m.name)}" data-initials="${esc(m.initials)}" ${sel}>${esc(m.name)} (${esc(m.initials)})</option>`;
-  }
-  return html;
-}
 
 function cardHTML(task) {
   const colorDots = COLORS.map(
@@ -133,9 +124,8 @@ function cardHTML(task) {
               ${task.due_day ? `<span class="mini-badge inline-block mt-2 text-[9px] bg-white/70 px-2 py-0.5 rounded-full text-primary font-bold">${esc(task.due_day)}</span>` : ""}
             </div>
             <div class="card-toolbar">
-              <!-- Pencil => Edit Mode ; Curved arrows (360) => Read-Only Mode -->
-              <span class="material-symbols-outlined" data-action="edit" title="Edit task">edit</span>
-              <span class="material-symbols-outlined" data-action="read" title="Flip to read">360</span>
+              <!-- Pencil => Edit Mode ; Double-Click => Read-Only Mode -->
+              <span class="material-symbols-outlined edit-btn" data-action="edit" draggable="false" title="Edit task">edit</span>
               <span class="material-symbols-outlined trash-icon" data-action="delete" draggable="false" title="Delete task">delete</span>
             </div>
           </div>
@@ -163,7 +153,7 @@ function cardHTML(task) {
             <div class="card-toolbar ro-toolbar">
               <span class="text-[10px] font-bold opacity-50 tracking-wide">READ ONLY</span>
               <!-- Bridge: jump into Edit Mode WITHOUT flipping the card around. -->
-              <span class="material-symbols-outlined ro-edit-bridge" data-action="to-edit" title="Edit task">edit</span>
+              <span class="material-symbols-outlined ro-edit-bridge edit-btn" data-action="to-edit" draggable="false" title="Edit task">edit</span>
             </div>
           </div>
 
@@ -175,7 +165,7 @@ function cardHTML(task) {
               <input class="edit-field js-edit-title font-bold" value="${esc(task.title)}" placeholder="Title">
 
               <label class="text-[10px] font-bold opacity-70">Assignee</label>
-              <select class="assignee-select js-edit-assignee">${buildAssigneeOptions(task)}</select>
+              <input type="text" class="assignee-input js-edit-assignee" value="${esc(task.username)}" placeholder="Name or initials...">
 
               <label class="text-[10px] font-bold opacity-70">Description</label>
               <textarea class="edit-textarea js-edit-desc flex-1" style="min-height:80px" placeholder="Detailed notes & instructions...">${esc(task.description)}</textarea>
@@ -243,6 +233,10 @@ function flipToBack(container, mode) {
   container.classList.remove("mode-readonly", "mode-edit");
   container.classList.add(mode === "edit" ? "mode-edit" : "mode-readonly");
   container.classList.add("is-flipped");
+  
+  if (mode === "edit") {
+    container.setAttribute("draggable", "false");
+  }
 }
 
 // Bridge: read-only -> edit WITHOUT flipping the card around.
@@ -250,10 +244,12 @@ function setEditMode(container) {
   populateForm(container, BoardState.get(Number(container.dataset.id)));
   container.classList.remove("mode-readonly");
   container.classList.add("mode-edit");
+  container.setAttribute("draggable", "false");
 }
 
 function flipToFront(container) {
   container.classList.remove("is-flipped", "mode-readonly", "mode-edit");
+  container.setAttribute("draggable", "true");
   const drawer = container.querySelector(".style-drawer");   // always close the drawer on the way out
   if (drawer) drawer.classList.remove("open");
 }
@@ -286,11 +282,9 @@ function populateForm(container, task) {
   container.querySelector(".js-edit-url").value = task.deliverable_url || "";
   container.querySelector(".js-edit-day").value = task.due_day || "";
   container.querySelector(".js-edit-initials").value = task.assignee_initials;
+  container.querySelector(".js-edit-assignee").value = task.username || "Unassigned";
   container.querySelector(".js-subtasks").innerHTML = (task.subtasks || []).map(subtaskRowHTML).join("");
   container.querySelectorAll(".color-dot").forEach((d) => d.classList.toggle("selected", d.dataset.color === task.color));
-  // Refresh assignee select with current project members.
-  const assigneeSelect = container.querySelector(".js-edit-assignee");
-  if (assigneeSelect) assigneeSelect.innerHTML = buildAssigneeOptions(task);
 }
 
 function gatherSubtasks(container) {
@@ -304,21 +298,21 @@ function gatherSubtasks(container) {
 async function saveCard(container) {
   const id = Number(container.dataset.id);
   const selectedDot = container.querySelector(".color-dot.selected");
-  const assigneeSelect = container.querySelector(".js-edit-assignee");
-  const selectedOption = assigneeSelect?.selectedOptions[0];
+  const assigneeVal = container.querySelector(".js-edit-assignee").value.trim();
   const changes = {
     title: container.querySelector(".js-edit-title").value.trim(),
     description: container.querySelector(".js-edit-desc").value,
     deliverable_url: container.querySelector(".js-edit-url").value.trim(),
     due_day: container.querySelector(".js-edit-day").value,
-    assignee_initials: selectedOption ? (selectedOption.dataset.initials || container.querySelector(".js-edit-initials").value.trim()) : container.querySelector(".js-edit-initials").value.trim(),
-    username: selectedOption ? selectedOption.value : "Unassigned",
+    assignee_initials: container.querySelector(".js-edit-initials").value.trim(),
+    username: assigneeVal || "Unassigned",
     color: selectedDot ? selectedDot.dataset.color : BoardState.get(id).color,
     subtasks: gatherSubtasks(container),
   };
   try {
     const updated = await apiPatchTask(id, changes);
     BoardState.upsert(updated);
+    BoardState.ensureMember(updated.username, updated.assignee_initials);
     renderBoard();   // simplest correct refresh — front summary + badges reflect new data
   } catch (err) { console.error(err); alert("Could not save. Is the server running?"); }
 }
@@ -342,6 +336,24 @@ function addSubtaskRow(container) {
   wrap.insertAdjacentHTML("beforeend", subtaskRowHTML({ id: nextId, text: "", done: false }));
   const last = wrap.querySelector(".subtask-row:last-child .js-sub-text");
   if (last) last.focus();
+}
+
+function onBoardDblClick(evt) {
+  if (dragActive) return;
+  const container = getContainer(evt.target);
+  if (!container) return;
+
+  // Input Protection Guardrail
+  if (evt.target.closest('input, textarea, select, button, a, .edit-btn, .delete-btn, [data-action]')) return;
+
+  // Two-Way Execution
+  if (container.classList.contains("is-flipped")) {
+    if (container.classList.contains("mode-readonly")) {
+      flipToFront(container);
+    }
+  } else {
+    flipToBack(container, "read");
+  }
 }
 
 function onBoardClick(evt) {
@@ -368,6 +380,7 @@ function onBoardClick(evt) {
     case "edit":    flipToBack(container, "edit"); break;   // pencil -> Edit Mode
     case "read":    flipToBack(container, "read"); break;   // flip icon -> Read-Only Mode
     case "to-edit": setEditMode(container);        break;   // read-only bridge -> Edit Mode
+    case "return-front": flipToFront(container);   break;
     case "save":    saveCard(container);    break;
     case "cancel":  cancelCard(container);  break;
     case "delete":  deleteCard(container);  break;
@@ -379,12 +392,18 @@ function onBoardClick(evt) {
 
 // Trash icon, edit fields, textareas, selects and links must never bubble into flip/drag.
 function onBoardPointerGuards(evt) {
-  if (evt.target.closest(".trash-icon, .edit-field, .edit-textarea, .edit-select, .subtask-row, .deliverable-link, .ro-sub-row, .ro-link"))
-    evt.stopPropagation();
+  if (evt.target.closest("input, textarea, select, .edit-btn, .trash-icon, .edit-field, .edit-textarea, .edit-select, .subtask-row, .deliverable-link, .ro-sub-row, .ro-link")) {
+    if (evt.type === "dragstart") {
+      evt.stopPropagation();
+      evt.preventDefault();
+    }
+  }
 }
 
 // ---- Drag & drop ----------------------------------------------------------
 function onDragStart(evt) {
+  onBoardPointerGuards(evt);
+  if (evt.defaultPrevented) return;
   const container = evt.target.closest(".card-container");
   if (!container) return;
   if (container.classList.contains("is-flipped")) { evt.preventDefault(); return; }  // front-only
@@ -442,19 +461,75 @@ async function addTask() {
 // ===========================================================================
 // MEMBERS VIEW
 // ===========================================================================
+const STATUS_LABELS = { todo: "To-Do", in_progress: "In Progress", done: "Done", approved: "Approved" };
+
+function memberTaskListHTML(initials, name) {
+  const tasks = BoardState.all().filter((t) =>
+    t.assignee_initials?.toLowerCase() === initials.toLowerCase() ||
+    t.username?.toLowerCase() === name.toLowerCase()
+  );
+  if (!tasks.length) return `<div class="member-task-list"><span class="text-[11px] opacity-50 pl-1">No tasks assigned.</span></div>`;
+  return `<div class="member-task-list">${tasks.map((t) => `
+    <div class="member-task-item">
+      <span class="status-badge ${t.status}">${STATUS_LABELS[t.status] || t.status}</span>
+      <span class="flex-1 truncate">${esc(t.title)}</span>
+    </div>`).join("")}</div>`;
+}
+
 function renderMembers() {
   const grid = el("members-grid");
-  const members = BoardState.currentProject?.members || [];
+  
+  // Defensive WebKit initialization check
+  if (!BoardState.members || typeof BoardState.members !== 'object') BoardState.members = {};
+  if (Object.keys(BoardState.members).length === 0) {
+    BoardState.syncMembers();
+  } else {
+    BoardState.syncMembers();
+  }
+  
+  const members = BoardState.allMembers();
   if (!members.length) { grid.innerHTML = `<p class="opacity-60">No members yet.</p>`; return; }
   grid.innerHTML = members.map((m) => `
-    <div class="member-card">
+    <div class="member-card" data-initials="${esc(m.initials)}" data-name="${esc(m.name)}">
       <div class="member-avatar">${esc(m.initials)}</div>
       <div class="flex-1 min-w-0">
         <h3 class="font-bold text-on-surface truncate">${esc(m.name)}</h3>
-        <p class="text-[12px] text-on-surface-variant">${esc(m.role || "Member")}</p>
+        <input type="text" class="member-role-input" value="${esc(m.role)}" data-member-name="${esc(m.name)}">
       </div>
       <span class="member-count-pill">${BoardState.taskCountFor(m.initials)} tasks</span>
+      <button class="member-toggle" data-initials="${esc(m.initials)}" data-name="${esc(m.name)}">
+        View Tasks <span class="material-symbols-outlined">expand_more</span>
+      </button>
     </div>`).join("");
+
+  // Wire inline role editing
+  grid.querySelectorAll(".member-role-input").forEach((input) => {
+    const commitRole = () => {
+      const name = input.dataset.memberName;
+      BoardState.setMemberRole(name, input.value.trim() || "Team Member");
+    };
+    input.addEventListener("change", commitRole);
+    input.addEventListener("blur", commitRole);
+  });
+
+  // Wire accordion toggles
+  grid.querySelectorAll(".member-toggle").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const card = btn.closest(".member-card");
+      const existing = card.querySelector(".member-task-list");
+      if (existing) {
+        existing.remove();
+        btn.classList.remove("open");
+        return;
+      }
+      // Close any other open accordion
+      grid.querySelectorAll(".member-task-list").forEach((l) => l.remove());
+      grid.querySelectorAll(".member-toggle.open").forEach((b) => b.classList.remove("open"));
+      btn.classList.add("open");
+      card.insertAdjacentHTML("beforeend", memberTaskListHTML(btn.dataset.initials, btn.dataset.name));
+    });
+  });
 }
 
 // ===========================================================================
@@ -540,9 +615,29 @@ function renderResources() {
               <a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.title)}</a>
               <div class="res-url">${esc(r.url)}</div>
             </div>
+            <button class="delete-link-btn" data-res-url="${esc(r.url)}" data-res-title="${esc(r.title)}" title="Remove link" style="background:none; border:none; color:#FF6B6B; cursor:pointer; font-size:1.1rem; margin-left:auto;">🗑️</button>
           </div>`).join("")}
       </div>
     </div>`).join("");
+
+  // Wire delete buttons
+  list.querySelectorAll(".delete-link-btn").forEach((btn) => {
+    btn.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      const url = btn.dataset.resUrl;
+      const title = btn.dataset.resTitle;
+      const resources = (BoardState.currentProject.resources || []).filter(
+        (r) => !(r.url === url && r.title === title)
+      );
+      try {
+        const updated = await apiPatchProject(BoardState.projectCode, { resources });
+        BoardState.setCurrentProject(updated);
+        renderResources();
+        showToast("Link removed.");
+      } catch (err) { console.error(err); alert("Could not delete link. Is the server running?"); }
+    });
+  });
 }
 
 async function onResourceSubmit(evt) {
@@ -882,6 +977,54 @@ function initCommandPalette() {
 }
 
 // ===========================================================================
+// CROSS-TAB DRAG-DROP (Sprint Board -> Calendar Grid tab)
+// ===========================================================================
+function showToast(msg, duration = 2500) {
+  const toast = el("toast");
+  if (!toast) return;
+  toast.textContent = msg;
+  toast.classList.remove("hidden");
+  // Force re-trigger animation by removing/adding the element
+  toast.style.animation = "none";
+  toast.offsetHeight; // reflow
+  toast.style.animation = "";
+  clearTimeout(toast._timer);
+  toast._timer = setTimeout(() => toast.classList.add("hidden"), duration);
+}
+
+function initCalendarTabDrop() {
+  const calTab = el("nav-calendar-tab");
+  if (!calTab) return;
+
+  calTab.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    calTab.classList.add("tab-drop-hover");
+  });
+
+  calTab.addEventListener("dragleave", (e) => {
+    if (!calTab.contains(e.relatedTarget)) calTab.classList.remove("tab-drop-hover");
+  });
+
+  calTab.addEventListener("drop", async (e) => {
+    e.preventDefault();
+    e.stopPropagation();   // prevent the nav-tab click handler from firing
+    calTab.classList.remove("tab-drop-hover");
+    const id = Number(e.dataTransfer.getData("text/plain"));
+    if (!id) return;
+    try {
+      const updated = await apiPatchTask(id, { due_day: "" });
+      BoardState.upsert(updated);
+      // Pulse animation on tab
+      calTab.classList.add("tab-pulse");
+      calTab.addEventListener("animationend", () => calTab.classList.remove("tab-pulse"), { once: true });
+      showToast("Task routed to Calendar Unscheduled Tray.");
+      renderBoard();
+    } catch (err) { console.error(err); alert("Could not route task to calendar."); }
+  });
+}
+
+// ===========================================================================
 // Boot
 // ===========================================================================
 async function init() {
@@ -893,6 +1036,7 @@ async function init() {
     const [project, tasks] = await Promise.all([apiGetProject(defaultCode), apiGetTasks(defaultCode)]);
     BoardState.setCurrentProject(project);
     BoardState.setAll(tasks);
+    BoardState.syncMembers();
   } catch (err) { console.error(err); }
 
   updateHeader();
@@ -902,8 +1046,8 @@ async function init() {
   // --- Board (event delegation on the grid) ---
   const board = document.querySelector("#view-board .grid");
   board.addEventListener("click", onBoardClick);
-  board.addEventListener("mousedown", onBoardPointerGuards);
-  board.addEventListener("dragstart", (e) => { onBoardPointerGuards(e); onDragStart(e); });
+  board.addEventListener("dblclick", onBoardDblClick);
+  board.addEventListener("dragstart", onDragStart);
   board.addEventListener("dragend", onDragEnd);
   board.addEventListener("dragover", onDragOver);
   board.addEventListener("dragleave", onDragLeave);
@@ -942,6 +1086,9 @@ async function init() {
 
   // --- Command palette ---
   initCommandPalette();
+
+  // --- Cross-tab drag-drop (board -> calendar tab) ---
+  initCalendarTabDrop();
 }
 
 init();
