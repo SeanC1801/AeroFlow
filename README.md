@@ -1,6 +1,6 @@
 # AeroFlow
 
-**A beautiful, glassmorphic Kanban board for managing team projects and sprints.**
+**A Kanban board for managing team projects and sprints.**
 
 AeroFlow is a productivity suite built for students and small teams who need a lightweight, visually polished way to organise tasks across multiple project workspaces. It features a drag-and-drop sprint board, team member overview, weekly calendar grid, and a resource hub — all wrapped in a Frutiger Aero–inspired glass UI.
 
