@@ -113,19 +113,40 @@ body {
 }
 .card-container.is-flipped .card-inner {
     transform: rotateY(180deg) scale(1) translateY(0) !important;
-    backface-visibility: hidden !important;
+    /* No backface-visibility here: this is the element being rotated 180deg, so
+       hiding its backface culls the whole card subtree out of hit-testing and every
+       click in edit mode falls through to .card-container. It belongs on .card-face. */
 }
 
-/* The face: ONLY handles 3D positioning + hiding its own backface. No filters. */
+/* The face: 3D positioning only. No filters.
+   Which face is live is driven EXPLICITLY by .is-flipped, not by backface culling.
+   The backdrop-filter on .card-face__surface defeats backface-visibility for
+   painting while browsers still honour it for hit-testing, so the face you could
+   see was never the face you could click. visibility + pointer-events keep
+   painting and hit-testing in agreement. Deliberately NOT transitioned: a
+   transitioned swap leaves the back face stuck hidden wherever transitions don't
+   run (background tab, reduced motion), which would blank the card in edit mode. */
 .card-face {
     position: absolute;
     inset: 0;
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
     border-radius: 1.5rem;
+    visibility: hidden;
+    pointer-events: none;
+}
+.card-face--front {
+    visibility: visible;
+    pointer-events: auto;
 }
 .card-face--back {
     transform: rotateY(180deg);
+}
+.card-container.is-flipped .card-face--front {
+    visibility: hidden;
+    pointer-events: none;
+}
+.card-container.is-flipped .card-face--back {
+    visibility: visible;
+    pointer-events: auto;
 }
 
 /* The surface: all the glass/gloss/overflow lives here, isolated from 3D. */
@@ -151,8 +172,12 @@ body {
     pointer-events: none;
 }
 
-/* ---- Hover: flat expansion + mint inset rim (no angular tilts) --------------- */
-.card-container:hover .card-inner {
+/* ---- Hover: flat expansion + mint inset rim (no angular tilts) ---------------
+   Scoped to :not(.is-flipped): this rule and the .is-flipped one below have equal
+   specificity and both carry !important, so while flipped the winner depended on
+   hover state and transition timing — the card would sometimes sit at rotateY(0)
+   with the back face turned away and unclickable. */
+.card-container:not(.is-flipped):hover .card-inner {
     transform: rotateY(0deg) scale(1.018) translateY(-1px) !important;
     transition: transform 0.15s ease-out, box-shadow 0.15s ease-out, border-color 0.15s ease-out;
 }
@@ -973,6 +998,9 @@ body {
     flex-direction: column !important;
     height: 100% !important;
     width: 100% !important;
+    min-height: 0 !important;
+    /* Scroll rather than clip when the hero header leaves the board little room. */
+    overflow-y: auto !important;
 }
 
 /* Primary Board Container: Enforce 4-column grid contract + bottom HUD clearance */
@@ -982,18 +1010,21 @@ body {
     gap: 16px !important;
     width: 100% !important;
     box-sizing: border-box !important;
-    height: 100% !important;
+    height: auto !important;
+    min-height: 100% !important;
     flex: 1 1 auto !important;
     align-items: stretch !important;
-    padding-bottom: 80px !important;
+    padding-bottom: 40px !important;
 }
 
 /* Board column trays ONLY — scoped to prevent blowing up Calendar/Resource/Members views */
 #view-board .glass-tray {
     display: flex !important;
     flex-direction: column !important;
-    min-height: 550px !important;
-    max-height: calc(100vh - 200px) !important;
+    /* Fill the row, with a usable floor. The board scrolls when the floor doesn't
+       fit, so the tray is never clipped mid-corner the way a hard 550px was. */
+    height: 100% !important;
+    min-height: 420px !important;
     overflow: hidden !important;
     position: relative !important;
     z-index: 5 !important;
@@ -1013,6 +1044,98 @@ body {
     display: flex !important;
     flex-direction: column !important;
     gap: 12px !important;
+    padding-right: 4px !important;   /* keeps cards clear of the scrollbar */
+}
+
+/* ============================================================================
+   COLUMN DENSITY — notes shrink to a floor, then the column scrolls
+   ----------------------------------------------------------------------------
+   Cards are flex children of [data-status]. With the default flex-shrink a
+   column of 5 crushed every card from 180px to ~50px, slicing titles mid-word
+   and pushing the pencil/trash row out of the clipped surface — and because the
+   cards always "fit", the column never overflowed, so the scrollbar never
+   appeared. Floor the shrink instead: notes compact down to a legible size, and
+   once they can't compact further the overflow goes to the scrollbar.
+   The size steps are custom properties on the column so one :has() rule retunes
+   the whole note at 3+ tasks.
+   ========================================================================== */
+#view-board [data-status] {
+    --note-h: 180px;
+    --note-floor: 148px;
+    --note-pad: 1rem;
+    --note-title: 14px;
+    --note-sub: 11px;
+    --note-avatar: 1.75rem;
+    --note-toolbar: 0.5rem;
+    --note-icon: 18px;
+}
+/* 3 or more tasks: tighter type and spacing so the shorter note still reads. */
+#view-board [data-status]:has(> .card-container:nth-child(3)) {
+    --note-h: 150px;
+    --note-floor: 124px;
+    --note-pad: 0.7rem;
+    --note-title: 12.5px;
+    --note-sub: 10px;
+    --note-avatar: 1.4rem;
+    --note-toolbar: 0.3rem;
+    --note-icon: 16px;
+}
+
+#view-board [data-status] > .card-container:not(.is-flipped) {
+    height: var(--note-h);
+    min-height: var(--note-floor);
+    flex: 0 1 auto;
+}
+/* A note opened for reading/editing is never squeezed by its neighbours. */
+#view-board [data-status] > .card-container.is-flipped {
+    flex: 0 0 auto;
+}
+#view-board [data-status] > .card-container:not(.is-flipped) .card-face--front .p-4 {
+    padding: var(--note-pad);
+    min-height: 0;
+    overflow: hidden;
+}
+#view-board [data-status] > .card-container:not(.is-flipped) .js-title {
+    font-size: var(--note-title) !important;
+    line-height: 1.25;
+}
+#view-board [data-status] > .card-container:not(.is-flipped) .js-username {
+    font-size: var(--note-sub);
+}
+#view-board [data-status] > .card-container:not(.is-flipped) .avatar-badge {
+    width: var(--note-avatar);
+    height: var(--note-avatar);
+    top: var(--note-pad);
+    right: var(--note-pad);
+}
+#view-board [data-status] > .card-container:not(.is-flipped) .card-toolbar {
+    padding: var(--note-toolbar);
+    flex-shrink: 0;   /* the pencil/trash row must survive compression */
+}
+#view-board [data-status] > .card-container:not(.is-flipped) .card-toolbar .material-symbols-outlined {
+    font-size: var(--note-icon);
+}
+/* Long titles ellipsize rather than being sliced mid-line. */
+#view-board .card-container .js-title {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Column scrollbar — matches the .board-scroll mint treatment. */
+#view-board [data-status] {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(140, 255, 190, 0.35) transparent;
+}
+#view-board [data-status]::-webkit-scrollbar { width: 6px; }
+#view-board [data-status]::-webkit-scrollbar-track { background: transparent; }
+#view-board [data-status]::-webkit-scrollbar-thumb {
+    background: rgba(140, 255, 190, 0.3);
+    border-radius: 999px;
+}
+#view-board [data-status]::-webkit-scrollbar-thumb:hover {
+    background: rgba(140, 255, 190, 0.55);
 }
 
 /* ============================================================================

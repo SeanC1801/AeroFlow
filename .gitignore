@@ -18,3 +18,7 @@ Thumbs.db
 
 # Backup files
 *.bak
+
+# Local agent/tooling state (not part of the app)
+.agents/
+.claude/

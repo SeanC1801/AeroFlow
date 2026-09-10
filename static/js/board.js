@@ -233,10 +233,19 @@ function flipToBack(container, mode) {
   container.classList.remove("mode-readonly", "mode-edit");
   container.classList.add(mode === "edit" ? "mode-edit" : "mode-readonly");
   container.classList.add("is-flipped");
-  
+
   if (mode === "edit") {
     container.setAttribute("draggable", "false");
   }
+  revealOpenCard(container);
+}
+
+// An opened note is taller than a collapsed one, so in a scrolling column it can
+// open with its Save row below the fold. Bring it into view. Synchronous and
+// instant on purpose: rAF and smooth scrolling are both animation-driven and
+// don't run in a backgrounded tab, which would strand the Save row off-screen.
+function revealOpenCard(container) {
+  container.scrollIntoView({ block: "nearest" });
 }
 
 // Bridge: read-only -> edit WITHOUT flipping the card around.
@@ -245,6 +254,7 @@ function setEditMode(container) {
   container.classList.remove("mode-readonly");
   container.classList.add("mode-edit");
   container.setAttribute("draggable", "false");
+  revealOpenCard(container);
 }
 
 function flipToFront(container) {
