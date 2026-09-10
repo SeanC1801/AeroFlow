@@ -37,6 +37,30 @@ Managing group projects — especially in a university setting — often means j
 
 ---
 
+## Screenshots
+
+### Sprint Board
+The main Kanban view with four-column task workflow. Drag cards between columns, click the pencil icon to edit, or double-click to view read-only details. Cards auto-compact when 3+ tasks are in a column.
+
+![Sprint Board](docs/screenshots/sprint-board.png)
+
+### Members
+Team roster showing each member's role and assigned task count. Quick overview of who's working on what.
+
+![Members View](docs/screenshots/members-view.png)
+
+### Calendar Grid
+Weekly schedule view (Mon–Sun) showing tasks grouped by their due day. Helps the team see at-a-glance workload distribution across the week.
+
+![Calendar Grid](docs/screenshots/calendar-grid.png)
+
+### Resource Hub
+Centralized link library for the project. Pin GitHub repos, Figma boards, Google Docs, or any external reference so the whole team knows where to find them.
+
+![Resource Hub](docs/screenshots/resource-hub.png)
+
+---
+
 ## Tech Stack
 
 | Layer | Technology |
